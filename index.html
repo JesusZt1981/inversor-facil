@@ -775,6 +775,22 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 </style>
 
 <style>.v32-pagination{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:14px 0 4px}.v32-pagination button{min-width:34px;padding:7px 10px}.v32-pagination button.active{background:linear-gradient(135deg,#ffb347,#ff7a59);color:#17110f;font-weight:900}.v32-page-info{color:#aebdca;font-size:11px;margin-left:6px}</style>
+
+<style>
+/* ===== V41 · Control de créditos Twelve Data ===== */
+.v41-credit-box{margin:12px 0;padding:12px;border:1px solid #36506b;border-radius:12px;background:linear-gradient(135deg,rgba(18,34,49,.96),rgba(27,25,39,.96))}
+.v41-credit-head{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:9px}
+.v41-credit-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px}
+.v41-credit-card{background:#1e2937;border:1px solid #3b4b60;border-radius:10px;padding:10px}
+.v41-credit-card span{display:block;color:#9fb0c4;font-size:11px;margin-bottom:4px}
+.v41-credit-card strong{font-size:18px}
+.v41-credit-bar{height:8px;border-radius:999px;background:#3b2d2b;overflow:hidden;margin-top:9px}
+.v41-credit-fill{height:100%;width:0;background:linear-gradient(90deg,#46d6a3,#ffd166,#ff6b7d);transition:width .25s}
+.v41-credit-note{margin-top:7px;font-size:11px;color:#9fb0c4;line-height:1.35}
+.v41-credit-actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:720px){.v41-credit-grid{grid-template-columns:1fr 1fr}}
+</style>
+
 </head>
 <body class="auth-loading">
 <canvas id="marketAmbientCanvas" aria-hidden="true"></canvas>
@@ -840,7 +856,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V40</h1>
+    <h1>Inversor Fácil V41</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -929,11 +945,47 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
     </div>
     <div class="grid grid2" style="margin-top:12px">
       <div class="card" style="box-shadow:none">
-        <h3>Catálogo compartido</h3>
-        <p class="muted">Publica en Supabase los precios y datos que actualmente tiene Inversor Fácil. Así todos los usuarios reciben el mismo catálogo compartido; no ejecuta el análisis histórico Top 500.</p>
+        
+<div class="v41-credit-box" id="v41CreditBox">
+  <div class="v41-credit-head">
+    <div>
+      <strong>Créditos Twelve Data</strong>
+      <div class="v41-credit-note">Consulta el consumo ANTES de hacer cualquier actualización que requiera Twelve Data. Actualizar el servidor con precios ya guardados no consume créditos.</div>
+    </div>
+    <div class="v41-credit-actions">
+      <button id="v41CheckUsage" class="secondary">Consultar créditos</button>
+    </div>
+  </div>
+
+  <div class="v41-credit-grid">
+    <div class="v41-credit-card">
+      <span>Plan</span>
+      <strong id="v41Plan">—</strong>
+    </div>
+    <div class="v41-credit-card">
+      <span>Usados hoy</span>
+      <strong id="v41DailyUsed">—</strong>
+    </div>
+    <div class="v41-credit-card">
+      <span>Disponibles hoy</span>
+      <strong id="v41DailyLeft">—</strong>
+    </div>
+    <div class="v41-credit-card">
+      <span>Límite por minuto</span>
+      <strong id="v41MinuteLimit">—</strong>
+    </div>
+  </div>
+
+  <div class="v41-credit-bar"><div class="v41-credit-fill" id="v41DailyFill"></div></div>
+  <div class="v41-credit-note" id="v41UsageStatus">Sin consultar. La consulta de créditos usa 1 crédito de Twelve Data.</div>
+</div>
+
+<h3>Catálogo compartido</h3>
+
+        <p class="muted">Sincroniza en Supabase los precios y datos YA GUARDADOS en Inversor Fácil. Esta acción no consulta Twelve Data y no consume créditos. Los usuarios reciben el mismo catálogo compartido.</p>
         <div class="actions">
-          <button id="v27UpdatePublish" class="primary">Actualizar todo en servidor</button>
-          <button id="v27PublishOnly" class="secondary">Volver a publicar catálogo</button>
+          <button id="v27UpdatePublish" class="primary">Sincronizar precios guardados</button>
+          <button id="v27PublishOnly" class="secondary">Republicar catálogo guardado</button>
         </div>
         <div id="v27AdminStatus" class="status">Esperando acción.</div>
         <div class="v28-admin-subhead"><h3>Usuarios</h3><div><span id="v28UserStatus">Cargando…</span> <button id="v28RefreshUsers" class="secondary small" type="button">Actualizar lista</button></div></div>
@@ -6396,6 +6448,103 @@ document.addEventListener("DOMContentLoaded",()=>{
   // sin necesidad de cerrar sesión.
   setInterval(v40SyncSharedCatalog,60000);
   window.addEventListener("focus",v40SyncSharedCatalog);
+})();
+</script>
+
+
+<script>
+/* ===== V41 · Créditos + sincronización sin consumo ===== */
+(function(){
+  const MAILER_URL="https://inversor-facil-mailer.onrender.com";
+
+  async function authHeaders(){
+    const {data,error}=await v24Supabase.auth.getSession();
+    if(error||!data?.session?.access_token)throw new Error("No hay sesión válida.");
+    return {"Content-Type":"application/json","Authorization":"Bearer "+data.session.access_token};
+  }
+
+  function paintUsage(u){
+    const dailyLimit=Number(u.daily_limit||800);
+    const dailyUsed=Number(u.daily_used||0);
+    const dailyLeft=Math.max(0,Number.isFinite(Number(u.daily_left))?Number(u.daily_left):dailyLimit-dailyUsed);
+    const minuteLimit=Number(u.minute_limit||8);
+
+    document.getElementById("v41Plan").textContent=u.plan||"Basic";
+    document.getElementById("v41DailyUsed").textContent=`${dailyUsed.toLocaleString("es-MX")} / ${dailyLimit.toLocaleString("es-MX")}`;
+    document.getElementById("v41DailyLeft").textContent=dailyLeft.toLocaleString("es-MX");
+    document.getElementById("v41MinuteLimit").textContent=`${minuteLimit} créditos/min`;
+    document.getElementById("v41DailyFill").style.width=`${Math.min(100,dailyUsed/dailyLimit*100)}%`;
+
+    const status=document.getElementById("v41UsageStatus");
+    const at=new Date(u.checked_at||Date.now()).toLocaleString("es-MX");
+    if(dailyLeft<=0){
+      status.textContent=`LÍMITE DIARIO AGOTADO. No se deben hacer nuevas consultas de mercado hoy. Última consulta: ${at}.`;
+      status.style.color="#ff8d9b";
+    }else if(dailyLeft<100){
+      status.textContent=`Quedan solo ${dailyLeft} créditos hoy. Se recomienda no iniciar análisis masivos. Última consulta: ${at}.`;
+      status.style.color="#ffd166";
+    }else{
+      status.textContent=`Quedan ${dailyLeft} créditos hoy. Última consulta: ${at}.`;
+      status.style.color="#9fe8ca";
+    }
+  }
+
+  async function checkUsage(){
+    const status=document.getElementById("v41UsageStatus");
+    status.textContent="Consultando Twelve Data…";
+    try{
+      const headers=await authHeaders();
+      const r=await fetch(MAILER_URL+"/api/twelve-usage",{headers});
+      const j=await r.json();
+      if(!r.ok)throw new Error(j.error||`Error ${r.status}`);
+      paintUsage(j);
+      return j;
+    }catch(e){
+      status.textContent="No fue posible consultar créditos: "+e.message;
+      status.style.color="#ff8d9b";
+      throw e;
+    }
+  }
+
+  document.getElementById("v41CheckUsage")?.addEventListener("click",checkUsage);
+
+  // Al abrir el panel Admin solo mostramos el último snapshot guardado por el servidor;
+  // no gastamos un crédito automáticamente.
+  async function loadCachedUsage(){
+    try{
+      const headers=await authHeaders();
+      const r=await fetch(MAILER_URL+"/api/twelve-usage-cache",{headers});
+      if(r.ok){
+        const j=await r.json();
+        if(j?.checked_at)paintUsage(j);
+      }
+    }catch(e){}
+  }
+
+  document.getElementById("v27AdminButton")?.addEventListener("click",()=>setTimeout(loadCachedUsage,300));
+
+  // Reemplaza la acción "Sincronizar precios guardados":
+  // publica exclusivamente lo que ya está en memoria/local y Supabase.
+  const btn=document.getElementById("v27UpdatePublish");
+  if(btn){
+    const clone=btn.cloneNode(true);
+    btn.replaceWith(clone);
+    clone.id="v27UpdatePublish";
+    clone.addEventListener("click",async()=>{
+      const st=document.getElementById("v27AdminStatus");
+      try{
+        if(!v27IsAdmin())throw new Error("Solo el administrador puede sincronizar el catálogo.");
+        st.textContent="Sincronizando precios ya guardados con Supabase (0 créditos Twelve Data)…";
+        st.className="status";
+        const n=await v27PublishCatalog();
+        st.textContent=`Listo: ${n} activos sincronizados. Esta operación consumió 0 créditos Twelve Data.`;
+        st.className="status ok";
+      }catch(e){
+        st.textContent=e.message;
+        st.className="status error";
+      }
+    });
+  }
 })();
 </script>
 
