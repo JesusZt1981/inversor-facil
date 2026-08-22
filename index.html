@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inversor Fácil V23 · Top 500 + Gráficos</title>
+<title>Inversor Fácil V25 · Mercado Dinámico</title>
 <style>
 :root{
   --bg:#15110f;--panel:#211b19;--panel2:#2a211e;--line:#4a3932;
@@ -607,8 +607,25 @@ tr[data-chart-symbol]{transition:background .15s ease,box-shadow .15s ease}tr[da
   }
 </style>
 
+<style id="v25-dynamic-market">
+#marketAmbientCanvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:-3;pointer-events:none;opacity:.92}
+#marketGlowLayer{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;background:radial-gradient(circle at 16% 18%,rgba(0,132,255,.22),transparent 30%),radial-gradient(circle at 82% 25%,rgba(255,30,75,.16),transparent 27%),radial-gradient(circle at 55% 82%,rgba(0,199,255,.10),transparent 30%)}
+#marketGlowLayer::before,#marketGlowLayer::after{content:"";position:absolute;inset:-20%;opacity:.42;mix-blend-mode:screen;background:repeating-linear-gradient(90deg,transparent 0 78px,rgba(76,159,255,.05) 79px 80px),repeating-linear-gradient(0deg,transparent 0 58px,rgba(255,73,105,.035) 59px 60px);animation:v25GridDrift 28s linear infinite}
+#marketGlowLayer::after{opacity:.22;transform:scale(1.15) rotate(-2deg);animation-duration:42s;animation-direction:reverse}@keyframes v25GridDrift{to{transform:translate3d(90px,55px,0) scale(1.03)}}
+#marketTickerAmbient{position:fixed;left:0;right:0;bottom:0;z-index:20;pointer-events:none;height:28px;overflow:hidden;border-top:1px solid rgba(66,127,197,.22);background:linear-gradient(90deg,rgba(6,9,14,.90),rgba(11,15,22,.86),rgba(8,10,15,.92));backdrop-filter:blur(8px)}
+#marketTickerAmbient .ticker-track{display:flex;align-items:center;gap:28px;width:max-content;height:100%;white-space:nowrap;font-size:11px;font-weight:800;letter-spacing:.045em;color:#9fb7d4;animation:v25TickerMove 42s linear infinite}
+#marketTickerAmbient .up{color:#4ce6b1}#marketTickerAmbient .down{color:#ff5b70}#marketTickerAmbient .blue{color:#59b8ff}@keyframes v25TickerMove{to{transform:translateX(-50%)}}
+#v24UserBar{position:relative;z-index:30}#v25SoundBtn{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#101824,#151c27);border:1px solid #315072;color:#dcecff}#v25SoundBtn[data-on="true"]{background:linear-gradient(135deg,rgba(31,115,220,.85),rgba(180,28,56,.72));border-color:#4fa6ff;box-shadow:0 0 20px rgba(37,137,255,.18)}#v25SoundPulse{width:8px;height:8px;border-radius:50%;background:#627083;display:inline-block}#v25SoundBtn[data-on="true"] #v25SoundPulse{background:#5de0ff;box-shadow:0 0 0 0 rgba(93,224,255,.4);animation:v25SoundPulse 1.7s infinite}@keyframes v25SoundPulse{70%{box-shadow:0 0 0 7px rgba(93,224,255,0)}100%{box-shadow:0 0 0 0 rgba(93,224,255,0)}}
+#v23MarketStage .v23-chart-wrap.v24-expanded{display:block!important;width:calc(100% - 36px)!important;max-width:none!important;height:96px!important;min-height:96px!important;margin-left:18px!important;margin-right:18px!important}#v23MarketStage .v23-chart-wrap.v24-expanded .v23-chart-svg{display:block!important;width:100%!important;max-width:none!important;height:96px!important;min-height:96px!important}
+@media(max-width:600px){#v23MarketStage .v23-chart-wrap.v24-expanded{width:calc(100% - 20px)!important;margin-left:10px!important;margin-right:10px!important;height:100px!important;min-height:100px!important}#v23MarketStage .v23-chart-wrap.v24-expanded .v23-chart-svg{width:100%!important;height:100px!important;min-height:100px!important}}
+.card,.investment-card,.asset-card,.portfolio-visual,.radar-card,.v23-market-stage{box-shadow:0 16px 38px rgba(0,0,0,.36),0 0 0 1px rgba(64,135,210,.035)}.card:hover,.investment-card:hover,.asset-card:hover,.portfolio-visual:hover,.radar-card:hover{box-shadow:0 20px 48px rgba(0,0,0,.46),0 0 25px rgba(37,137,255,.08)}
+@media(prefers-reduced-motion:reduce){#marketGlowLayer::before,#marketGlowLayer::after,#marketTickerAmbient .ticker-track{animation:none}}
+</style>
 </head>
 <body class="auth-loading">
+<canvas id="marketAmbientCanvas" aria-hidden="true"></canvas>
+<div id="marketGlowLayer" aria-hidden="true"></div>
+<div id="marketTickerAmbient" aria-hidden="true"><div class="ticker-track"><span class="blue">MERCADO VIVO</span><span class="up">▲ +1.82%</span><span>NASDAQ</span><span class="down">▼ -0.74%</span><span class="blue">S&P 500</span><span class="up">▲ +0.96%</span><span>VOLATILIDAD</span><span class="down">▼ -1.21%</span><span class="blue">TECNOLOGÍA</span><span class="up">▲ +2.14%</span><span>ETF</span><span class="down">▼ -0.38%</span><span class="blue">MERCADO VIVO</span><span class="up">▲ +1.82%</span><span>NASDAQ</span><span class="down">▼ -0.74%</span><span class="blue">S&P 500</span><span class="up">▲ +0.96%</span><span>VOLATILIDAD</span><span class="down">▼ -1.21%</span><span class="blue">TECNOLOGÍA</span><span class="up">▲ +2.14%</span><span>ETF</span><span class="down">▼ -0.38%</span></div></div>
 
 <div id="authGate">
   <div class="auth-card">
@@ -623,6 +640,7 @@ tr[data-chart-symbol]{transition:background .15s ease,box-shadow .15s ease}tr[da
 
 <div id="v24UserBar" class="hidden">
   <span id="v24UserEmail" class="user-pill">—</span>
+  <button id="v25SoundBtn" class="small" type="button" data-on="false" aria-pressed="false"><span id="v25SoundPulse"></span><span id="v25SoundLabel">Sonido ambiente: apagado</span></button>
   <button id="v24LogoutBtn" class="secondary small" type="button">Cerrar sesión</button>
 </div>
 
@@ -664,7 +682,7 @@ tr[data-chart-symbol]{transition:background .15s ease,box-shadow .15s ease}tr[da
 
 <header>
   <div>
-    <h1>Inversor Fácil V23</h1>
+    <h1>Inversor Fácil V25</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -735,7 +753,7 @@ tr[data-chart-symbol]{transition:background .15s ease,box-shadow .15s ease}tr[da
   </div>
   <div class="v23-chart-wrap v24-collapsed">
     <div class="v23-chart-hint">Mueve el cursor sobre la línea para leer cada punto</div>
-    <svg id="v23ChartSvg" class="v23-chart-svg" viewBox="0 0 1100 380" role="img" aria-label="Gráfica histórica del activo seleccionado"></svg>
+    <svg id="v23ChartSvg" class="v23-chart-svg" viewBox="0 0 1100 380" preserveAspectRatio="none" role="img" aria-label="Gráfica histórica del activo seleccionado"></svg>
     <div id="v23ChartTip" class="v23-tip hidden"></div>
   </div>
   <div class="v23-stage-foot"><span id="v23StageMessage"><b>Fácil de leer:</b> Día = cierres diarios; Semana = un cierre por semana; Mes = un cierre por mes; Año = un cierre por año.</span><div class="actions"><button id="v23ChartToggle" class="primary small" type="button">Desplegar gráfico</button><button id="v23CompleteHistory" class="secondary small" type="button">Completar historial disponible</button></div></div>
@@ -5183,6 +5201,9 @@ $("top500Clear")?.addEventListener("click",()=>{if(confirm("¿Borrar únicamente
 
 
 
+// ===== V25 · Fondo de mercado vivo + audio ambiental =====
+(function(){const canvas=document.getElementById("marketAmbientCanvas"),ctx=canvas&&canvas.getContext("2d");if(!canvas||!ctx)return;let w=0,h=0,dpr=1,t=0;function resize(){dpr=Math.min(window.devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+"px";canvas.style.height=h+"px";ctx.setTransform(dpr,0,0,dpr,0,0)}resize();addEventListener("resize",resize,{passive:true});function draw(){t+=.006;ctx.clearRect(0,0,w,h);let bg=ctx.createLinearGradient(0,0,w,h);bg.addColorStop(0,"rgba(2,9,20,.94)");bg.addColorStop(.52,"rgba(5,13,25,.92)");bg.addColorStop(1,"rgba(15,4,11,.94)");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);const cols=Math.max(8,Math.floor(w/110)),rows=Math.max(5,Math.floor(h/120)),pts=[];for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){const px=x/cols*w+Math.sin(t*3+x*.8+y)*10,py=y/rows*h+Math.cos(t*2+y*.7+x)*7;pts.push([px,py])}ctx.lineWidth=.55;for(let i=0;i<pts.length-cols-1;i++){const a=pts[i],b=pts[i+1];ctx.strokeStyle=i%5===0?"rgba(255,50,80,.07)":"rgba(70,160,255,.075)";ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}function chart(base,amp,speed,color,phase){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=1.6;ctx.shadowBlur=10;ctx.shadowColor=color;ctx.beginPath();for(let x=0;x<=w;x+=6){const n=Math.sin(x*.012+t*speed+phase)*.46+Math.sin(x*.028-t*speed*.62+phase*1.7)*.22+Math.sin(x*.005+t*.9)*.34,y=base+n*amp;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();ctx.restore()}chart(h*.35,Math.min(105,h*.13),2.2,"rgba(47,160,255,.78)",0);chart(h*.62,Math.min(125,h*.16),1.65,"rgba(255,49,79,.72)",1.8);for(let i=0;i<16;i++){const x=(i*137+t*70*(1+i%3))%(w+80)-40,y=(i*83+Math.sin(t*2+i)*80)%(h+100)-50;ctx.fillStyle=i%3===0?"rgba(255,64,95,.13)":"rgba(64,169,255,.13)";ctx.beginPath();ctx.arc(x,y,1.5+(i%4)*.45,0,Math.PI*2);ctx.fill()}requestAnimationFrame(draw)}requestAnimationFrame(draw)})();
+(function(){const btn=document.getElementById("v25SoundBtn"),label=document.getElementById("v25SoundLabel");if(!btn||!label)return;let ac=null,master=null,nodes=[],timer=null;function start(){if(ac)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC){label.textContent="Sonido no disponible";return}ac=new AC();master=ac.createGain();master.gain.value=.035;master.connect(ac.destination);function pad(freq,type,detune,vol){const osc=ac.createOscillator(),gain=ac.createGain(),filter=ac.createBiquadFilter();osc.type=type;osc.frequency.value=freq;osc.detune.value=detune;filter.type="lowpass";filter.frequency.value=850;gain.gain.value=vol;osc.connect(filter);filter.connect(gain);gain.connect(master);osc.start();nodes.push(osc,gain,filter);return{osc,gain,filter}}const a=pad(110,"sine",-5,.55),b=pad(164.81,"sine",4,.32),c=pad(220,"triangle",0,.13);let phase=0;timer=setInterval(()=>{if(!ac)return;phase+=.13;const now=ac.currentTime;a.gain.gain.setTargetAtTime(.48+.08*Math.sin(phase),now,1.7);b.gain.gain.setTargetAtTime(.28+.06*Math.sin(phase*.7+1),now,1.9);c.gain.gain.setTargetAtTime(.10+.025*Math.sin(phase*.5+2),now,2.2);a.filter.frequency.setTargetAtTime(720+180*Math.sin(phase*.4),now,2.2)},1300);btn.dataset.on="true";btn.setAttribute("aria-pressed","true");label.textContent="Sonido ambiente: encendido"}function stop(){if(timer){clearInterval(timer);timer=null}if(ac){const x=ac;ac=null;try{master.gain.setTargetAtTime(0,x.currentTime,.08)}catch(e){}setTimeout(()=>{try{x.close()}catch(e){}},180)}nodes=[];master=null;btn.dataset.on="false";btn.setAttribute("aria-pressed","false");label.textContent="Sonido ambiente: apagado"}btn.addEventListener("click",()=>btn.dataset.on==="true"?stop():start());addEventListener("beforeunload",stop)})();
 // ===== V24 · Supabase Auth / Google =====
 const V24_SUPABASE_URL = "https://bcabfavdxxzauahpbmsa.supabase.co";
 const V24_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_F89WekECwWG6d4Nzpk4wag_9gN_ELBG";
