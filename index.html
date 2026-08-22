@@ -606,6 +606,18 @@ body.v30-user .v30-admin-only{display:none!important}body.v30-user #tab-settings
   #tab-explore .filter-group{display:grid!important;grid-template-columns:1fr!important}
 }
 
+
+/* ===== V33 · alertas, administración y Top 500 ===== */
+.v33-admin-block{margin-top:16px;padding-top:14px;border-top:1px solid #3b485b}
+.v33-alert-stats{margin:10px 0}
+.v33-test-row{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:8px;margin-top:10px;align-items:center}
+.v33-top20-wrap{margin-top:10px;max-height:420px}
+.v33-switch-line{display:flex;gap:9px;align-items:center;padding:10px 12px;border:1px solid #435269;border-radius:11px;background:#1b232e}
+body.v30-admin #v33Top500Toolbar{display:grid!important}
+body.v30-user #v33Top500Toolbar{display:none!important}
+#v33Top500Load,#v33Top500Analyze,#v33Top500Open{min-height:40px}
+@media(max-width:800px){.v33-test-row{grid-template-columns:1fr}.v33-test-row button{width:100%}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -787,7 +799,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V32</h1>
+    <h1>Inversor Fácil V33</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -888,6 +900,38 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         <div class="v28-danger-note">Los usuarios normales se eliminan automáticamente tras 7 días completos sin actividad. Tu cuenta Admin está excluida de esa limpieza.</div>
         <div class="v28-admin-subhead"><h3>Bloqueados</h3><button id="v28RefreshBlocked" class="secondary small" type="button">Actualizar</button></div>
         <div class="table-wrap"><table class="v28-user-table"><thead><tr><th>Correo</th><th>Fecha</th><th>Motivo</th><th>Acción</th></tr></thead><tbody id="v28BlockedBody"><tr><td colspan="4">Sin cargar.</td></tr></tbody></table></div>
+
+        <div class="v33-admin-block">
+          <div class="v28-admin-subhead"><h3>Top 500 · control rápido</h3><span class="badge">SOLO ADMIN</span></div>
+          <p class="muted">Estos botones controlan el mismo módulo Top 500. El universo no es aleatorio: se construye de forma determinista con símbolos elegibles de NASDAQ/NYSE/AMEX y luego se ordena por rendimiento.</p>
+          <div class="actions">
+            <button id="v33Top500Load" class="secondary">1. Cargar universo 500</button>
+            <button id="v33Top500Analyze" class="primary">2. Analizar hasta 5 años</button>
+            <button id="v33Top500Open" class="secondary">Abrir Top 500</button>
+          </div>
+          <div id="v33Top500AdminStatus" class="status">Listo para cargar el universo.</div>
+        </div>
+
+        <div class="v33-admin-block">
+          <div class="v28-admin-subhead"><h3>📧 Top 20 diario por correo</h3><span class="badge">PILOTO</span></div>
+          <div class="grid grid3 v33-alert-stats">
+            <div class="metric"><span>Suscritos</span><strong id="v33Subscribers">—</strong></div>
+            <div class="metric"><span>Último Top 20</span><strong id="v33LastTop20">—</strong></div>
+            <div class="metric"><span>Envío automático</span><strong id="v33AutoMailState">Pendiente</strong></div>
+          </div>
+          <p class="muted">El ranking usa cambio diario real: último cierre frente al cierre anterior. Siempre toma las 20 empresas con mejor rendimiento disponible.</p>
+          <div class="actions">
+            <button id="v33GenerateTop20" class="primary">Generar Top 20 ahora</button>
+            <button id="v33RefreshAlerts" class="secondary">Actualizar estado</button>
+          </div>
+          <div class="v33-test-row">
+            <input id="v33TestEmail" type="email" placeholder="Correo de prueba (puede ser el tuyo)">
+            <button id="v33SendTest" class="secondary">Enviar prueba</button>
+            <button id="v33ResendTop20" class="secondary">Reenviar último Top 20</button>
+          </div>
+          <div id="v33MailStatus" class="status">La interfaz y Supabase quedan preparados. El envío real requiere conectar una vez el backend de Gmail en Render.</div>
+          <div class="table-wrap v33-top20-wrap"><table><thead><tr><th>#</th><th>Empresa</th><th>Símbolo</th><th>Precio</th><th>Día</th></tr></thead><tbody id="v33Top20Body"><tr><td colspan="5" class="empty">Aún no hay Top 20 generado.</td></tr></tbody></table></div>
+        </div>
 
       </div>
       <div class="card" style="box-shadow:none">
@@ -1302,7 +1346,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
       Con el plan gratuito de 8 créditos por minuto, analizar 500 empresas puede tardar alrededor de una hora. El avance se guarda para poder continuar después sin empezar desde cero.
     </div>
 
-    <div class="top500-toolbar v30-admin-only">
+    <div id="v33Top500Toolbar" class="top500-toolbar v30-admin-only">
       <div>
         <label for="top500Target">Tamaño del universo</label>
         <select id="top500Target">
@@ -1343,7 +1387,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
     </div>
 
     <div class="section-head" style="margin-top:16px">
-      <div><h2>Clasificación</h2><p class="muted" style="margin:0">Se muestran hasta 100 resultados ordenados. Puedes agregar cualquiera a tu catálogo principal.</p></div>
+      <div><h2>Clasificación</h2><p class="muted" style="margin:0">Se muestran resultados paginados de 30 en 30. El Admin puede agregar activos al catálogo principal.</p></div>
       <button id="top500Clear" class="danger small v30-admin-only">Borrar análisis Top 500</button>
     </div>
     <div class="table-wrap">
@@ -1681,6 +1725,13 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         <button id="demoMove" class="secondary">Probar sin clave</button>
       </div>
       <div id="marketStatus" class="status">Sin clave puedes usar precios demostrativos. Para datos reales, sigue “Cómo obtenerla”.</div>
+    </div>
+
+    <div class="card" id="v33NotificationsCard">
+      <h2>Notificaciones por correo</h2>
+      <p class="muted">Puedes recibir un único resumen diario con las 20 empresas de mayor rendimiento del día. Puedes desactivarlo cuando quieras.</p>
+      <label class="v33-switch-line"><input id="v33EmailOptIn" type="checkbox" style="width:auto"> <span>Quiero recibir el Top 20 diario por correo</span></label>
+      <div id="v33EmailPrefStatus" class="status">Cargando preferencia…</div>
     </div>
 
     <div class="card">
@@ -5728,5 +5779,72 @@ setTimeout(()=>{v23AttachDelegation();mountV23MarketStage("dashboard");},250);
 (function(){let last=0;window.v30ApplyPermissions=function(){const a=(()=>{try{return typeof v27IsAdmin==="function"&&v27IsAdmin()}catch(e){return false}})();document.body.classList.toggle("v30-admin",a);document.body.classList.toggle("v30-user",!a);document.querySelectorAll(".v30-admin-only").forEach(e=>e.style.display=a?"":"none");if(!a)document.getElementById("v27AdminPanel")?.classList.add("hidden");const n=document.getElementById("v30MarketNotice");if(n)n.innerHTML=a?'Modo administrador. <b>Actualiza y publica el catálogo</b> para que todos reciban los mismos precios. <button class="help-btn" data-help="prices" type="button">?</button>':'Usa esta app como práctica. <b>Los precios compartidos son administrados por Inversor Fácil.</b> Tu simulación no compra ni vende dinero real. <button class="help-btn" data-help="prices" type="button">?</button>'};function layout(){const w=matchMedia("(min-width:900px)").matches;document.body.classList.toggle("v30-wide",w);const app=document.querySelector(".app"),l=document.getElementById("v30DesktopLeft"),r=document.getElementById("v30DesktopRight");if(!app||!l||!r)return;const h=document.querySelector(".app > header,#v30DesktopLeft > header"),n=document.querySelector(".app > .notice,#v30DesktopLeft > .notice"),t=document.getElementById("v27TopStrip"),m=document.querySelector(".app > section.grid.grid4,#v30DesktopRight > section.grid.grid4");if(w){if(h)l.appendChild(h);if(n)l.appendChild(n);if(t)r.appendChild(t);if(m)r.appendChild(m)}else{const a=document.getElementById("helpBackdrop");if(h)app.insertBefore(h,a.nextSibling);if(n)app.insertBefore(n,h.nextSibling);const mob=document.getElementById("v26MobileNav");if(t)app.insertBefore(t,mob);if(m)app.insertBefore(m,mob)}}async function sync(force=false){if(typeof v27LoadSharedCatalog!=="function")return;const now=Date.now();if(!force&&now-last<60000)return;last=now;try{await v27LoadSharedCatalog()}catch(e){}}setInterval(()=>sync(false),300000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")sync(false)});addEventListener("focus",()=>sync(false));addEventListener("resize",layout);document.addEventListener("DOMContentLoaded",()=>{layout();setTimeout(()=>{v30ApplyPermissions();sync(true)},700);setTimeout(v30ApplyPermissions,1800)})})();
 </script>
 <script>(function(){const PAGE=30,states=new WeakMap();function items(c){if(!c)return[];if(c.id==='top500Rows')return[...c.children].filter(x=>x.tagName==='TR'&&!x.querySelector('.empty'));if(c.id==='assetGrid'||c.id==='radarResults')return[...c.children].filter(x=>!x.classList.contains('empty'));return[...c.children].filter(x=>x.tagName==='TR'&&!x.querySelector('.empty'))}function go(c){const a=items(c),pages=Math.max(1,Math.ceil(a.length/PAGE));let st=states.get(c)||{page:1};st.page=Math.min(st.page,pages);states.set(c,st);a.forEach((e,i)=>e.style.display=(Math.floor(i/PAGE)+1===st.page)?'':'none');const host=c.id==='top500Rows'?(c.closest('.top500-table-wrap')||c.closest('table')):c;if(!host)return;let nav=host.parentElement&&host.parentElement.querySelector('.v32-pagination[data-for="'+c.id+'"]');if(a.length<=PAGE){if(nav)nav.remove();return}if(!nav){nav=document.createElement('div');nav.className='v32-pagination';nav.dataset.for=c.id;host.insertAdjacentElement('afterend',nav)}const lo=Math.max(1,st.page-2),hi=Math.min(pages,lo+4);let h='<button data-p="prev">‹</button>';if(lo>1)h+='<button data-p="1">1</button>'+(lo>2?'<span>…</span>':'');for(let n=lo;n<=hi;n++)h+='<button data-p="'+n+'" class="'+(n===st.page?'active':'')+'">'+n+'</button>';if(hi<pages)h+=(hi<pages-1?'<span>…</span>':'')+'<button data-p="'+pages+'">'+pages+'</button>';h+='<button data-p="next">›</button><span class="v32-page-info">'+a.length+' resultados · 30 por página</span>';nav.innerHTML=h;nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{st.page=b.dataset.p==='prev'?Math.max(1,st.page-1):b.dataset.p==='next'?Math.min(pages,st.page+1):Number(b.dataset.p);go(c);host.scrollIntoView({behavior:'smooth',block:'start'})})}function apply(){['assetGrid','radarResults','top500Rows'].forEach(id=>{const e=document.getElementById(id);if(e)go(e)});document.querySelectorAll('#marketHistoryContent table tbody').forEach((e,i)=>{if(!e.id)e.id='v32HistoryBody'+i;go(e)})}let t;const o=new MutationObserver(()=>{clearTimeout(t);t=setTimeout(apply,100)});document.addEventListener('DOMContentLoaded',()=>{o.observe(document.body,{subtree:true,childList:true});setTimeout(apply,600)});window.v32Paginate=apply})();</script>
+
+<script>
+/* ===== V33 · Top 20, preferencias y controles Admin ===== */
+const V33_MAIL_API = ""; // se configurará cuando creemos el Web Service de Gmail en Render
+let v33Top20Cache=[];
+
+function v33FmtPct(v){const n=Number(v);return Number.isFinite(n)?`${n>=0?"+":""}${n.toFixed(2)}%`:"—"}
+function v33FmtUSD(v){const n=Number(v);return Number.isFinite(n)?new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n):"—"}
+
+async function v33RefreshNotificationState(){
+  try{
+    const {data:{session}}=await v24Supabase.auth.getSession(); if(!session?.user)return;
+    const {data,error}=await v24Supabase.from("profiles").select("email,email_top20,role").eq("id",session.user.id).single();
+    if(error)throw error;
+    const cb=document.getElementById("v33EmailOptIn"); if(cb)cb.checked=!!data.email_top20;
+    const st=document.getElementById("v33EmailPrefStatus"); if(st){st.textContent=data.email_top20?`Activado para ${data.email}.`:`Desactivado para ${data.email}.`;st.className=`status ${data.email_top20?"ok":""}`}
+    if(data.role==="admin"){
+      const [{count},{data:reports}]=await Promise.all([
+        v24Supabase.from("profiles").select("id",{count:"exact",head:true}).eq("email_top20",true),
+        v24Supabase.from("daily_top20").select("market_date,created_at,items").order("market_date",{ascending:false}).limit(1)
+      ]);
+      document.getElementById("v33Subscribers").textContent=count??0;
+      const r=reports?.[0];document.getElementById("v33LastTop20").textContent=r?.market_date||"Sin generar";
+      if(r?.items){v33Top20Cache=r.items;v33RenderTop20(r.items)}
+      document.getElementById("v33AutoMailState").textContent=V33_MAIL_API?"Conectado":"Backend pendiente";
+    }
+  }catch(e){const st=document.getElementById("v33EmailPrefStatus");if(st){st.textContent="Preferencias disponibles después de ejecutar SQL V33.";st.className="status warn"}}
+}
+
+async function v33SaveOptIn(){
+  const cb=document.getElementById("v33EmailOptIn"),st=document.getElementById("v33EmailPrefStatus");
+  try{const {data:{session}}=await v24Supabase.auth.getSession();if(!session?.user)return;const {error}=await v24Supabase.from("profiles").update({email_top20:!!cb.checked}).eq("id",session.user.id);if(error)throw error;st.textContent=cb.checked?"Resumen diario activado.":"Resumen diario desactivado.";st.className="status ok"}catch(e){st.textContent=e.message;st.className="status error"}
+}
+
+async function v33GenerateTop20(){
+  if(!v27IsAdmin())throw new Error("Solo Admin puede generar el Top 20.");
+  const {data,error}=await v24Supabase.from("shared_catalog").select("symbol,name,price,daily_percent,market_date,updated_at").not("daily_percent","is",null).order("daily_percent",{ascending:false}).limit(20);
+  if(error)throw error;if(!data?.length)throw new Error("No hay rendimientos diarios publicados todavía. Primero usa Actualizar todo + publicar.");
+  const items=data.map((x,i)=>({rank:i+1,...x}));
+  const marketDate=items.find(x=>x.market_date)?.market_date || new Date().toISOString().slice(0,10);
+  const {error:saveErr}=await v24Supabase.from("daily_top20").upsert({market_date:marketDate,items,generated_by:(await v24Supabase.auth.getUser()).data.user?.id},{onConflict:"market_date"});
+  if(saveErr)throw saveErr;v33Top20Cache=items;v33RenderTop20(items);await v33RefreshNotificationState();return {marketDate,items};
+}
+function v33RenderTop20(items){const tb=document.getElementById("v33Top20Body");if(!tb)return;tb.innerHTML=(items||[]).map(x=>`<tr><td><b>#${x.rank}</b></td><td>${x.name||"—"}</td><td>${x.symbol}</td><td>${v33FmtUSD(x.price)}</td><td class="${Number(x.daily_percent)>=0?'positive':'negative'}">${v33FmtPct(x.daily_percent)}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">Sin datos.</td></tr>'}
+
+async function v33Mail(path,payload){
+  if(!V33_MAIL_API)throw new Error("El backend de Gmail aún no está conectado. Los botones ya están preparados; falta crear el Web Service en Render una sola vez.");
+  const {data:{session}}=await v24Supabase.auth.getSession();const r=await fetch(`${V33_MAIL_API}${path}`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${session?.access_token||""}`},body:JSON.stringify(payload||{})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"No se pudo enviar el correo.");return j;
+}
+
+function v33AdminTop500Status(msg,kind=""){const el=document.getElementById("v33Top500AdminStatus");if(el){el.textContent=msg;el.className=`status ${kind}`}}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("v33EmailOptIn")?.addEventListener("change",v33SaveOptIn);
+  document.getElementById("v33RefreshAlerts")?.addEventListener("click",v33RefreshNotificationState);
+  document.getElementById("v33GenerateTop20")?.addEventListener("click",async()=>{const st=document.getElementById("v33MailStatus");try{st.textContent="Generando Top 20…";await v33GenerateTop20();st.textContent="Top 20 generado y guardado en Supabase.";st.className="status ok"}catch(e){st.textContent=e.message;st.className="status error"}});
+  document.getElementById("v33SendTest")?.addEventListener("click",async()=>{const st=document.getElementById("v33MailStatus"),email=document.getElementById("v33TestEmail").value.trim();try{if(!email)throw new Error("Escribe el correo de prueba.");st.textContent="Enviando prueba…";await v33Mail("/top20/test",{email});st.textContent=`Prueba enviada a ${email}.`;st.className="status ok"}catch(e){st.textContent=e.message;st.className="status error"}});
+  document.getElementById("v33ResendTop20")?.addEventListener("click",async()=>{const st=document.getElementById("v33MailStatus");try{st.textContent="Reenviando último Top 20…";await v33Mail("/top20/resend",{});st.textContent="Reenvío solicitado.";st.className="status ok"}catch(e){st.textContent=e.message;st.className="status error"}});
+
+  document.getElementById("v33Top500Load")?.addEventListener("click",()=>{if(!v27IsAdmin())return;const target=document.getElementById("top500Target");if(target)target.value="500";document.getElementById("top500LoadUniverse")?.click();v33AdminTop500Status("Cargando universo de 500 empresas…")});
+  document.getElementById("v33Top500Analyze")?.addEventListener("click",()=>{if(!v27IsAdmin())return;document.getElementById("top500Analyze")?.click();v33AdminTop500Status("Analizando rendimientos e historial de hasta 5 años…")});
+  document.getElementById("v33Top500Open")?.addEventListener("click",()=>{showTab("top500");setTimeout(()=>document.getElementById("v33Top500Toolbar")?.scrollIntoView({behavior:"smooth",block:"center"}),150)});
+
+  setTimeout(()=>{v33RefreshNotificationState();if(v27IsAdmin()){document.getElementById("v33Top500Toolbar")?.style.setProperty("display","grid","important")}},1200);
+});
+</script>
+
 </body>
 </html>
