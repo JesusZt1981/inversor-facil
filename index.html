@@ -840,7 +840,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V39</h1>
+    <h1>Inversor Fácil V40</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -930,10 +930,10 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
     <div class="grid grid2" style="margin-top:12px">
       <div class="card" style="box-shadow:none">
         <h3>Catálogo compartido</h3>
-        <p class="muted">Usa tu clave local de Twelve Data para actualizar todos los activos y después publícalos en Supabase. Tus amigos no necesitan tu clave.</p>
+        <p class="muted">Publica en Supabase los precios y datos que actualmente tiene Inversor Fácil. Así todos los usuarios reciben el mismo catálogo compartido; no ejecuta el análisis histórico Top 500.</p>
         <div class="actions">
-          <button id="v27UpdatePublish" class="primary">Actualizar todo + publicar</button>
-          <button id="v27PublishOnly" class="secondary">Publicar catálogo actual</button>
+          <button id="v27UpdatePublish" class="primary">Actualizar todo en servidor</button>
+          <button id="v27PublishOnly" class="secondary">Volver a publicar catálogo</button>
         </div>
         <div id="v27AdminStatus" class="status">Esperando acción.</div>
         <div class="v28-admin-subhead"><h3>Usuarios</h3><div><span id="v28UserStatus">Cargando…</span> <button id="v28RefreshUsers" class="secondary small" type="button">Actualizar lista</button></div></div>
@@ -954,20 +954,20 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         </div>
 
         <div class="v33-admin-block">
-          <div class="v28-admin-subhead"><h3>📧 Top 20 diario por correo</h3><span class="badge">PILOTO</span></div>
+          <div class="v28-admin-subhead"><h3>📧 Correo y Top 20</h3><span class="badge">PILOTO</span></div>
           <div class="grid grid3 v33-alert-stats">
             <div class="metric"><span>Suscritos</span><strong id="v33Subscribers">—</strong></div>
             <div class="metric"><span>Último Top 20</span><strong id="v33LastTop20">—</strong></div>
             <div class="metric"><span>Envío automático</span><strong id="v33AutoMailState">Pendiente</strong></div>
           </div>
-          <p class="muted">El ranking usa cambio diario real: último cierre frente al cierre anterior. Siempre toma las 20 empresas con mejor rendimiento disponible.</p>
+          <p class="muted">“Enviar prueba” solo comprueba que Render + Gmail funcionan y no necesita Top 20. El Top 20 real se configurará después con datos de mercado.</p>
           <div class="actions">
             <button id="v33GenerateTop20" class="primary">Generar Top 20 ahora</button>
             <button id="v33RefreshAlerts" class="secondary">Actualizar estado</button>
           </div>
           <div class="v33-test-row">
             <input id="v33TestEmail" type="email" placeholder="Correo de prueba (puede ser el tuyo)">
-            <button id="v33SendTest" class="secondary">Enviar prueba</button>
+            <button id="v33SendTest" class="secondary">Enviar correo de prueba</button>
             <button id="v33ResendTop20" class="secondary">Reenviar último Top 20</button>
           </div>
           <div id="v33MailStatus" class="status">La interfaz y Supabase quedan preparados. El envío real requiere conectar una vez el backend de Gmail en Render.</div>
@@ -5902,7 +5902,20 @@ function v27OpenAdmin(open=true){$("v27AdminPanel")?.classList.toggle("hidden",!
 document.getElementById("v27AdminButton")?.addEventListener("click",()=>v27OpenAdmin(true));
 document.getElementById("v27CloseAdmin")?.addEventListener("click",()=>v27OpenAdmin(false));
 document.getElementById("v27PublishOnly")?.addEventListener("click",async()=>{const s=$("v27AdminStatus");try{s.textContent="Publicando catálogo actual…";const n=await v27PublishCatalog();s.textContent=`Publicado: ${n} activos compartidos.`;s.className="status ok";}catch(e){s.textContent=e.message;s.className="status error";}});
-document.getElementById("v27UpdatePublish")?.addEventListener("click",async()=>{const s=$("v27AdminStatus");try{if(!v27IsAdmin())throw new Error("Solo el administrador puede actualizar y publicar.");if(!$("marketKey").value.trim())throw new Error("Primero guarda tu clave de Twelve Data en Configuración.");s.textContent="Actualizando todo el catálogo con Twelve Data…";s.className="status";const ok=await updateVisibleMarket();if(ok===false)throw new Error("No se completó la actualización del catálogo.");s.textContent="Publicando resultados para todos los usuarios…";const n=await v27PublishCatalog();s.textContent=`Listo: ${n} activos actualizados y publicados para todos.`;s.className="status ok";}catch(e){s.textContent=e.message;s.className="status error";}});
+document.getElementById("v27UpdatePublish")?.addEventListener("click",async()=>{
+  const st=$("v27AdminStatus");
+  try{
+    if(!v27IsAdmin())throw new Error("Solo el administrador puede actualizar el servidor.");
+    st.textContent="Actualizando el catálogo compartido en Supabase…";
+    st.className="status";
+    const n=await v27PublishCatalog();
+    st.textContent=`Listo: ${n} activos publicados en el servidor. Los usuarios recibirán estos precios al sincronizar.`;
+    st.className="status ok";
+  }catch(e){
+    st.textContent=e.message;
+    st.className="status error";
+  }
+});
 
 // ===== V24 · Supabase Auth / Google =====
 const V24_SUPABASE_URL = "https://bcabfavdxxzauahpbmsa.supabase.co";
@@ -6164,7 +6177,7 @@ async function v33GenerateTop20(){
 function v33RenderTop20(items){const tb=document.getElementById("v33Top20Body");if(!tb)return;tb.innerHTML=(items||[]).map(x=>`<tr><td><b>#${x.rank}</b></td><td>${x.name||"—"}</td><td>${x.symbol}</td><td>${v33FmtUSD(x.price)}</td><td class="${Number(x.daily_percent)>=0?'positive':'negative'}">${v33FmtPct(x.daily_percent)}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">Sin datos.</td></tr>'}
 
 async function v33Mail(path,payload){
-  if(!V33_MAIL_API)throw new Error("Backend de correo conectado a Render. Usa Enviar prueba o Reenviar último Top 20.");
+  if(!V33_MAIL_API)throw new Error("Backend conectado. El correo de prueba no requiere analizar empresas ni generar Top 20.");
   const {data:{session}}=await v24Supabase.auth.getSession();const r=await fetch(`${V33_MAIL_API}${path}`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${session?.access_token||""}`},body:JSON.stringify(payload||{})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"No se pudo enviar el correo.");return j;
 }
 
@@ -6355,6 +6368,34 @@ document.addEventListener("DOMContentLoaded",()=>{
     const badge=document.getElementById("v33MailBackend");
     if(badge) badge.textContent="Conectado";
   });
+})();
+</script>
+
+
+<script>
+/* ===== V40 · Sincronización del catálogo compartido ===== */
+(function(){
+  let syncing=false;
+
+  async function v40SyncSharedCatalog(){
+    if(syncing || document.hidden)return;
+    syncing=true;
+    try{
+      const {data}=await v24Supabase.auth.getSession();
+      if(data?.session?.user){
+        await v27LoadSharedCatalog();
+      }
+    }catch(e){
+      console.warn("V40 sync catálogo:",e?.message||e);
+    }finally{
+      syncing=false;
+    }
+  }
+
+  // Los usuarios que dejan la app abierta reciben el catálogo actualizado
+  // sin necesidad de cerrar sesión.
+  setInterval(v40SyncSharedCatalog,60000);
+  window.addEventListener("focus",v40SyncSharedCatalog);
 })();
 </script>
 
