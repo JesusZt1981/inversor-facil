@@ -791,6 +791,29 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 @media(max-width:720px){.v41-credit-grid{grid-template-columns:1fr 1fr}}
 </style>
 
+
+<style>
+/* ===== V42 · Actualizar TODO con precios guardados ===== */
+#v42RefreshAllSaved{
+  background:linear-gradient(135deg,#16a47a,#2d82d5)!important;
+  color:#fff!important;border:1px solid #64d9be!important;font-weight:900!important
+}
+#v42CreditMini{
+  padding:11px 12px;border-radius:13px;border:1px solid #334c68;
+  background:linear-gradient(145deg,rgba(15,25,37,.97),rgba(20,20,31,.96));
+  font-size:11px;line-height:1.35
+}
+#v42CreditMini .v42-credit-title{font-weight:900;color:#74c7ff;margin-bottom:6px}
+#v42CreditMini .v42-credit-row{display:flex;justify-content:space-between;gap:7px;margin:3px 0}
+#v42CreditMini .v42-credit-row strong{font-size:12px}
+#v42CreditMini .v42-credit-foot{margin-top:7px;color:#9fb0c4;font-size:10px}
+#v42CreditMini button{width:100%;margin-top:7px}
+.v42-sync-banner{padding:10px 12px;border-radius:10px;background:#102c36;border:1px solid #2c6f88;color:#bfefff;font-size:12px;margin:8px 0}
+@media(max-width:899px){
+  #v42CreditMini{margin:10px 0}
+}
+</style>
+
 </head>
 <body class="auth-loading">
 <canvas id="marketAmbientCanvas" aria-hidden="true"></canvas>
@@ -813,6 +836,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 <div id="v24UserBar" class="hidden">
   <span id="v24UserEmail" class="user-pill">—</span>
   <span id="v34AdminBadge" class="v34-admin-badge hidden">ADMIN</span>
+  <button id="v42RefreshAllSaved" class="small hidden" type="button">↻ ACTUALIZAR TODO CON PRECIOS GUARDADOS</button>
   <button id="v25SoundBtn" class="small" type="button" data-on="false" aria-pressed="false"><span id="v25SoundPulse"></span><span id="v25SoundLabel">Música focus: apagada</span></button>
   <button id="v28DeleteMeBtn" class="danger small" type="button">Eliminar mi cuenta</button>
   <button id="v24LogoutBtn" class="secondary small" type="button">Cerrar sesión</button>
@@ -856,11 +880,22 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V41</h1>
+    <h1>Inversor Fácil V42</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
 </header>
+
+<div id="v42CreditMini" class="hidden">
+  <div class="v42-credit-title">Twelve Data · créditos</div>
+  <div class="v42-credit-row"><span>Plan</span><strong id="v42MiniPlan">—</strong></div>
+  <div class="v42-credit-row"><span>Usados hoy</span><strong id="v42MiniUsed">—</strong></div>
+  <div class="v42-credit-row"><span>Disponibles</span><strong id="v42MiniLeft">—</strong></div>
+  <div class="v42-credit-row"><span>Por minuto</span><strong id="v42MiniMinute">—</strong></div>
+  <div class="v42-credit-foot" id="v42MiniStatus">Último dato guardado; no consume créditos.</div>
+  <button id="v42MiniCheck" class="secondary small" type="button">Consultar contador ahora</button>
+</div>
+
 
 <div class="notice" id="v30MarketNotice">Usa esta app como práctica. <b>Los precios compartidos son administrados por Inversor Fácil.</b> Tu simulación no compra ni vende dinero real. <button class="help-btn" data-help="prices" type="button">?</button></div>
 
@@ -982,9 +1017,9 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <h3>Catálogo compartido</h3>
 
-        <p class="muted">Sincroniza en Supabase los precios y datos YA GUARDADOS en Inversor Fácil. Esta acción no consulta Twelve Data y no consume créditos. Los usuarios reciben el mismo catálogo compartido.</p>
+        <p class="muted">ACTUALIZAR TODO usa exclusivamente los precios ya guardados en Supabase: catálogo, cartera, explorador, comparaciones, métricas y Top 20 provisional. Consume 0 créditos Twelve Data. Los precios guardados se renuevan por separado cuando el backend tiene créditos disponibles.</p>
         <div class="actions">
-          <button id="v27UpdatePublish" class="primary">Sincronizar precios guardados</button>
+          <button id="v27UpdatePublish" class="primary">ACTUALIZAR TODO CON PRECIOS GUARDADOS</button>
           <button id="v27PublishOnly" class="secondary">Republicar catálogo guardado</button>
         </div>
         <div id="v27AdminStatus" class="status">Esperando acción.</div>
@@ -1012,7 +1047,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
             <div class="metric"><span>Último Top 20</span><strong id="v33LastTop20">—</strong></div>
             <div class="metric"><span>Envío automático</span><strong id="v33AutoMailState">Pendiente</strong></div>
           </div>
-          <p class="muted">“Enviar prueba” solo comprueba que Render + Gmail funcionan y no necesita Top 20. El Top 20 real se configurará después con datos de mercado.</p>
+          <p class="muted">“Enviar prueba” solo comprueba Render + Gmail. “Generar Top 20” usa los precios guardados del servidor y consume 0 créditos. Cuando Twelve Data renueve precios, el mismo Top 20 usará esos datos nuevos.</p>
           <div class="actions">
             <button id="v33GenerateTop20" class="primary">Generar Top 20 ahora</button>
             <button id="v33RefreshAlerts" class="secondary">Actualizar estado</button>
@@ -6523,7 +6558,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   document.getElementById("v27AdminButton")?.addEventListener("click",()=>setTimeout(loadCachedUsage,300));
 
-  // Reemplaza la acción "Sincronizar precios guardados":
+  // Reemplaza la acción "ACTUALIZAR TODO CON PRECIOS GUARDADOS":
   // publica exclusivamente lo que ya está en memoria/local y Supabase.
   const btn=document.getElementById("v27UpdatePublish");
   if(btn){
@@ -6545,6 +6580,273 @@ document.addEventListener("DOMContentLoaded",()=>{
       }
     });
   }
+})();
+</script>
+
+
+<script>
+/* ===== V42 · TODO desde precios guardados ===== */
+(function(){
+  const MAILER_URL="https://inversor-facil-mailer.onrender.com";
+  const CREDIT_SNAPSHOT_KEY="inversorFacilV42CreditSnapshot";
+
+  function v42Admin(){
+    try{return typeof v27IsAdmin==="function"&&v27IsAdmin()}catch(e){return false}
+  }
+
+  async function v42Headers(){
+    const {data,error}=await v24Supabase.auth.getSession();
+    if(error||!data?.session?.access_token)throw new Error("No hay sesión válida de Supabase.");
+    return {"Content-Type":"application/json","Authorization":"Bearer "+data.session.access_token};
+  }
+
+  function v42PaintCredits(u,save=true){
+    if(!u)return;
+    const plan=u.plan||"Basic";
+    const limit=Number(u.daily_limit||800);
+    const used=Number(u.daily_used);
+    const left=Number(u.daily_left);
+    const minute=Number(u.minute_limit||8);
+
+    const usedTxt=Number.isFinite(used)?`${used.toLocaleString("es-MX")} / ${limit.toLocaleString("es-MX")}`:"—";
+    const leftTxt=Number.isFinite(left)?Math.max(0,left).toLocaleString("es-MX"):"—";
+
+    document.getElementById("v42MiniPlan")&&(document.getElementById("v42MiniPlan").textContent=plan);
+    document.getElementById("v42MiniUsed")&&(document.getElementById("v42MiniUsed").textContent=usedTxt);
+    document.getElementById("v42MiniLeft")&&(document.getElementById("v42MiniLeft").textContent=leftTxt);
+    document.getElementById("v42MiniMinute")&&(document.getElementById("v42MiniMinute").textContent=`${minute}/min`);
+
+    // También mantener el panel grande V41 sincronizado.
+    document.getElementById("v41Plan")&&(document.getElementById("v41Plan").textContent=plan);
+    document.getElementById("v41DailyUsed")&&(document.getElementById("v41DailyUsed").textContent=usedTxt);
+    document.getElementById("v41DailyLeft")&&(document.getElementById("v41DailyLeft").textContent=leftTxt);
+    document.getElementById("v41MinuteLimit")&&(document.getElementById("v41MinuteLimit").textContent=`${minute} créditos/min`);
+    if(document.getElementById("v41DailyFill")&&Number.isFinite(used)&&limit>0){
+      document.getElementById("v41DailyFill").style.width=`${Math.min(100,used/limit*100)}%`;
+    }
+
+    const at=u.checked_at?new Date(u.checked_at).toLocaleString("es-MX"):"sin fecha";
+    const st=document.getElementById("v42MiniStatus");
+    if(st){
+      st.textContent=Number.isFinite(left)&&left<=0
+        ? `Límite diario agotado · snapshot ${at}`
+        : `Snapshot ${at} · no se consulta solo`;
+    }
+
+    if(save){
+      try{localStorage.setItem(CREDIT_SNAPSHOT_KEY,JSON.stringify(u))}catch(e){}
+    }
+  }
+
+  function v42LoadLocalCredits(){
+    try{
+      const u=JSON.parse(localStorage.getItem(CREDIT_SNAPSHOT_KEY)||"null");
+      if(u)v42PaintCredits(u,false);
+    }catch(e){}
+  }
+
+  async function v42LoadServerCreditCache(){
+    if(!v42Admin())return;
+    try{
+      const headers=await v42Headers();
+      const r=await fetch(MAILER_URL+"/api/twelve-usage-cache",{headers});
+      if(r.ok){
+        const u=await r.json();
+        if(u?.checked_at)v42PaintCredits(u,true);
+      }
+    }catch(e){}
+  }
+
+  async function v42CheckCreditsNow(){
+    const st=document.getElementById("v42MiniStatus");
+    if(st)st.textContent="Consultando Twelve Data (esta consulta usa 1 crédito)…";
+    const headers=await v42Headers();
+    const r=await fetch(MAILER_URL+"/api/twelve-usage",{headers});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.error||`Error ${r.status}`);
+    v42PaintCredits(j,true);
+    return j;
+  }
+
+  function v42SavedTop20Rows(){
+    const stocks=assets.filter(a=>
+      a.type==="stock" &&
+      Number.isFinite(Number(a.price)) &&
+      Number(a.price)>0
+    );
+
+    return stocks
+      .map(a=>({
+        symbol:a.symbol,
+        name:a.name,
+        price:Number(a.price),
+        daily:Number.isFinite(Number(a.dailyPercent))?Number(a.dailyPercent):0,
+        in_catalog:true,
+        market_date:a.marketDate||a.updatedAt||null
+      }))
+      .sort((a,b)=>{
+        const d=b.daily-a.daily;
+        if(d!==0)return d;
+        return a.name.localeCompare(b.name);
+      })
+      .slice(0,20);
+  }
+
+  window.v42GenerateTop20FromSaved=async function(){
+    if(!v42Admin())throw new Error("Solo Admin puede generar el Top 20.");
+
+    // Primero leer la versión más reciente guardada en Supabase.
+    await v27LoadSharedCatalog();
+
+    const ranked=v42SavedTop20Rows();
+    if(!ranked.length)throw new Error("No hay precios guardados suficientes para generar el Top 20.");
+
+    const marketDate=new Date().toISOString().slice(0,10);
+    const items=ranked.map((x,i)=>({
+      rank:i+1,
+      symbol:x.symbol,
+      name:x.name,
+      price:x.price,
+      daily_change_pct:x.daily,
+      daily_percent:x.daily,
+      in_catalog:true,
+      source:"shared_catalog_saved"
+    }));
+
+    const {data:{session}}=await v24Supabase.auth.getSession();
+    const {error}=await v24Supabase.from("daily_top20").upsert({
+      market_date:marketDate,
+      items,
+      generated_by:session?.user?.id||null,
+      created_at:new Date().toISOString()
+    },{onConflict:"market_date"});
+    if(error)throw error;
+
+    v33Top20Cache=items;
+    window.v33LastTop20=items;
+    v33RenderTop20(items);
+    document.getElementById("v33LastTop20")&&(document.getElementById("v33LastTop20").textContent=marketDate);
+
+    const st=document.getElementById("v33MailStatus");
+    if(st){
+      st.textContent=`Top 20 provisional generado con ${items.length} empresas y precios GUARDADOS. Consumo Twelve Data: 0 créditos.`;
+      st.className="status ok";
+    }
+    return items;
+  };
+
+  function v42RerenderEverything(){
+    try{render()}catch(e){}
+    try{renderExplore()}catch(e){}
+    try{renderCompare()}catch(e){}
+    try{renderCatalogResults()}catch(e){}
+    try{renderMarketHistory()}catch(e){}
+    try{renderPortfolioVisuals()}catch(e){}
+    try{if(typeof v23RefreshSelector==="function")v23RefreshSelector()}catch(e){}
+  }
+
+  window.v42RefreshEverythingSaved=async function(){
+    if(!v42Admin())throw new Error("Solo el administrador puede actualizar todo.");
+
+    const btn=document.getElementById("v42RefreshAllSaved");
+    const adminStatus=document.getElementById("v27AdminStatus");
+    const original=btn?.textContent;
+
+    try{
+      if(btn){btn.disabled=true;btn.textContent="Actualizando TODO…";}
+      if(adminStatus){
+        adminStatus.textContent="Leyendo precios guardados del servidor y actualizando toda la app…";
+        adminStatus.className="status";
+      }
+
+      // 1) Lee lo ya guardado en Supabase. CERO créditos.
+      await v27LoadSharedCatalog();
+
+      // 2) Refresca todas las vistas que dependen de esos precios.
+      v42RerenderEverything();
+
+      // 3) Publica de nuevo el catálogo normalizado, también CERO créditos.
+      const n=await v27PublishCatalog();
+
+      // 4) Genera/reemplaza Top 20 provisional usando los mismos precios guardados.
+      const top=await v42GenerateTop20FromSaved();
+
+      // 5) Refresca estado administrativo.
+      try{await v27RefreshAdminStats()}catch(e){}
+      try{await v33LoadAlertState()}catch(e){}
+
+      const msg=`TODO actualizado con precios guardados: ${n} activos + Top ${top.length}. Twelve Data consumido: 0 créditos.`;
+      if(adminStatus){adminStatus.textContent=msg;adminStatus.className="status ok";}
+      const mail=document.getElementById("v33MailStatus");
+      if(mail){mail.textContent=msg;mail.className="status ok";}
+      if(typeof showToast==="function")showToast(msg,"ok");
+      return {catalog:n,top20:top.length};
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent=original||"↻ ACTUALIZAR TODO CON PRECIOS GUARDADOS";}
+    }
+  };
+
+  function bind(){
+    const refresh=document.getElementById("v42RefreshAllSaved");
+    refresh?.addEventListener("click",()=>v42RefreshEverythingSaved().catch(e=>{
+      if(typeof showToast==="function")showToast(e.message,"error");
+      const st=document.getElementById("v27AdminStatus");if(st){st.textContent=e.message;st.className="status error";}
+    }));
+
+    document.getElementById("v42MiniCheck")?.addEventListener("click",()=>v42CheckCreditsNow().catch(e=>{
+      const st=document.getElementById("v42MiniStatus");if(st)st.textContent=e.message;
+    }));
+
+    // Reemplaza "Generar Top 20 ahora": ahora usa precios guardados, 0 créditos.
+    const old=document.getElementById("v33GenerateTop20");
+    if(old){
+      const clone=old.cloneNode(true);
+      old.replaceWith(clone);
+      clone.id="v33GenerateTop20";
+      clone.addEventListener("click",()=>v42GenerateTop20FromSaved().catch(e=>{
+        const st=document.getElementById("v33MailStatus");if(st){st.textContent=e.message;st.className="status error";}
+      }));
+    }
+  }
+
+  // Ampliamos permisos visuales de V30.
+  const oldPerm=window.v30ApplyPermissions;
+  window.v30ApplyPermissions=function(){
+    if(oldPerm)oldPerm();
+    const admin=v42Admin();
+    document.getElementById("v42RefreshAllSaved")?.classList.toggle("hidden",!admin);
+    document.getElementById("v42CreditMini")?.classList.toggle("hidden",!admin);
+  };
+
+  // Mover contador justo debajo de Inversor Fácil en escritorio.
+  function placeCreditMini(){
+    const mini=document.getElementById("v42CreditMini");
+    const left=document.getElementById("v30DesktopLeft");
+    const app=document.querySelector(".app");
+    const header=document.querySelector(".app > header,#v30DesktopLeft > header");
+    const wide=matchMedia("(min-width:900px)").matches;
+    if(!mini||!app)return;
+
+    if(wide&&left&&header){
+      if(mini.parentElement!==left){
+        header.insertAdjacentElement("afterend",mini);
+      }
+    }else if(header&&mini.parentElement!==app){
+      header.insertAdjacentElement("afterend",mini);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    bind();
+    v42LoadLocalCredits();
+    setTimeout(()=>{
+      if(window.v30ApplyPermissions)window.v30ApplyPermissions();
+      placeCreditMini();
+      v42LoadServerCreditCache();
+    },1100);
+    setTimeout(placeCreditMini,1900);
+  });
+  addEventListener("resize",()=>setTimeout(placeCreditMini,50));
 })();
 </script>
 
