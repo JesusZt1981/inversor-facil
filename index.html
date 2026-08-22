@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inversor Fácil V30 · Catálogo Admin Compartido</title>
+<title>Inversor Fácil V31 · Listas + Ranking Inteligente</title>
 <style>
 :root{
   --bg:#15110f;--panel:#211b19;--panel2:#2a211e;--line:#4a3932;
@@ -564,6 +564,48 @@ body.v30-user .v30-admin-only{display:none!important}body.v30-user #tab-settings
 #v27AdminButton{background:linear-gradient(135deg,#1878b9,#6d55c8)!important;color:#fff!important;border:1px solid #64bfff!important}#v27UpdatePublish{background:linear-gradient(135deg,#16a47a,#2d82d5)!important;color:white!important}
 #v30DesktopLeft,#v30DesktopRight{display:none}
 @media(min-width:900px){body.v30-wide .app{width:auto!important;max-width:none!important;margin-left:clamp(190px,18vw,255px)!important;margin-right:clamp(210px,20vw,285px)!important;padding-left:12px!important;padding-right:12px!important}#v30DesktopLeft,#v30DesktopRight{display:flex;position:fixed;top:12px;bottom:34px;z-index:28;flex-direction:column;gap:10px;overflow:auto;padding:0 3px 8px;scrollbar-width:thin}#v30DesktopLeft{left:8px;width:clamp(174px,17vw,240px)}#v30DesktopRight{right:8px;width:clamp(194px,19vw,270px)}#v30DesktopLeft header{display:block;margin:0;padding:13px;border-radius:14px;background:linear-gradient(145deg,rgba(15,25,37,.97),rgba(20,20,31,.96));border:1px solid #334c68}#v30DesktopLeft header h1{font-size:clamp(24px,2.4vw,35px);line-height:1.03}#v30DesktopLeft header .badge{margin-top:8px}#v30DesktopLeft .notice{margin:0;font-size:12px;line-height:1.42}#v30DesktopRight .v27-top-strip{position:static!important;display:block!important;margin:0;padding:11px}#v30DesktopRight .v27-top-actions{margin-top:9px;display:grid!important}#v30DesktopRight .v27-top-actions button{width:100%}#v30DesktopRight .grid.grid4{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}#v30DesktopRight .metric{min-height:auto;padding:11px}#v30DesktopRight .metric strong{font-size:22px}}
+
+/* ===== V31 · listas horizontales, historial compacto y ranking ===== */
+.v31-rank-context{font-size:11px;color:#8dbfe9;margin-top:4px;font-weight:700}
+@media (min-width:760px){
+  #tab-explore .sidebar-layout{grid-template-columns:1fr!important;gap:10px!important}
+  #tab-explore .filter-group{display:grid!important;grid-template-columns:minmax(230px,2fr) repeat(4,minmax(115px,1fr));gap:8px;align-items:end}
+  #tab-explore aside.card{padding:11px 12px}
+  #tab-explore aside.card>h2{margin-bottom:8px}
+  #tab-explore #assetGrid{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+  #tab-explore #assetGrid .asset-card{display:grid!important;grid-template-columns:minmax(230px,1.35fr) minmax(360px,2.2fr) minmax(175px,.75fr);grid-template-rows:auto auto auto;gap:5px 12px;align-items:center;padding:10px 12px}
+  #tab-explore #assetGrid .asset-card .investment-top{grid-column:1;grid-row:1}
+  #tab-explore #assetGrid .asset-card>.asset-meta{grid-column:1;grid-row:2}
+  #tab-explore #assetGrid .asset-card>div[style*="margin:8px 0"]{grid-column:1;grid-row:3;margin:2px 0!important}
+  #tab-explore #assetGrid .asset-card>.asset-stats{grid-column:2;grid-row:1/4;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  #tab-explore #assetGrid .asset-card>.actions{grid-column:3;grid-row:1/4;display:grid!important;grid-template-columns:1fr;gap:6px;margin:0!important}
+  #tab-explore #assetGrid .asset-card>.actions button{width:100%}
+  #tab-explore #assetGrid .asset-card>.status{grid-column:1/-1;grid-row:4}
+
+  #tab-externalRadar #radarResults{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+  #tab-externalRadar .radar-card{display:grid!important;grid-template-columns:minmax(230px,1.15fr) minmax(460px,2.5fr) minmax(170px,.7fr);grid-template-rows:auto auto;gap:7px 12px;align-items:center;padding:10px 12px}
+  #tab-externalRadar .radar-card-head{grid-column:1;grid-row:1}
+  #tab-externalRadar .radar-card>div[style*="margin-top:7px"]{grid-column:1;grid-row:2;margin:0!important}
+  #tab-externalRadar .radar-metrics{grid-column:2;grid-row:1/3;grid-template-columns:repeat(5,minmax(0,1fr))!important;margin:0!important}
+  #tab-externalRadar .radar-actions{grid-column:3;grid-row:1/3;display:grid!important;gap:6px}
+  #tab-externalRadar .radar-actions button{width:100%}
+
+  .history-matrix{min-width:0!important;table-layout:fixed}
+  .history-matrix th,.history-matrix td{padding:7px 6px!important}
+  .history-matrix th:first-child,.history-matrix td:first-child{min-width:150px!important;width:150px!important}
+  .history-cell{min-width:0!important}
+  .history-day-head{white-space:normal!important;text-align:center;line-height:1.13}
+  .history-day-head .dow{display:block;font-size:11px;color:#f3f7fb}
+  .history-day-head .date{display:block;font-size:10px;color:#aeb9c8;margin-top:2px}
+  .history-day-head .state{display:block;font-size:9px;color:#6fd1ff;margin-top:3px;text-transform:none}
+  .history-row-rank{display:inline-flex;min-width:25px;height:20px;align-items:center;justify-content:center;margin-right:5px;border-radius:999px;background:#183957;color:#8fd5ff;border:1px solid #326389;font-size:9px;font-weight:900}
+  .top500-table{width:100%;border-collapse:collapse}
+  .top500-table th,.top500-table td{padding:8px 7px}
+}
+@media(max-width:759px){
+  #tab-explore .filter-group{display:grid!important;grid-template-columns:1fr!important}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -744,7 +786,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V30</h1>
+    <h1>Inversor Fácil V31</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -799,15 +841,9 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         <select id="v23SymbolSelect"><option value="">Selecciona un activo</option></select>
       </div>
       <div>
-        <label style="font-size:10px;color:#8e9aab;text-transform:uppercase;letter-spacing:.08em">Cómo agrupar</label>
-        <div id="v23Interval" class="v23-segment" style="margin-top:4px">
-          <button type="button" data-v23-interval="daily" class="active">Día</button><button type="button" data-v23-interval="weekly">Semana</button><button type="button" data-v23-interval="monthly">Mes</button><button type="button" data-v23-interval="annual">Año</button>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:10px;color:#8e9aab;text-transform:uppercase;letter-spacing:.08em">Cuánto historial</label>
+        <label style="font-size:10px;color:#8e9aab;text-transform:uppercase;letter-spacing:.08em">Periodo</label>
         <div id="v23Window" class="v23-segment v23-window" style="margin-top:4px">
-          <button type="button" data-v23-window="1m">1 m</button><button type="button" data-v23-window="3m">3 m</button><button type="button" data-v23-window="6m">6 m</button><button type="button" data-v23-window="1y" class="active">1 año</button><button type="button" data-v23-window="3y">3 años</button><button type="button" data-v23-window="all">Todo</button>
+          <button type="button" data-v23-window="1m">1M</button><button type="button" data-v23-window="3m">3M</button><button type="button" data-v23-window="6m">6M</button><button type="button" data-v23-window="1y" class="active">1A</button><button type="button" data-v23-window="3y">3A</button><button type="button" data-v23-window="all">TODO</button>
         </div>
       </div>
     </div>
@@ -816,7 +852,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
     <div class="v23-stat"><span>Inicio del periodo</span><strong id="v23StatStart">—</strong></div>
     <div class="v23-stat"><span>Último cierre</span><strong id="v23StatLast">—</strong></div>
     <div class="v23-stat"><span>Movimiento</span><strong id="v23StatMove">—</strong></div>
-    <div class="v23-stat"><span>Puntos visibles</span><strong id="v23StatPoints">0</strong></div>
+    <div class="v23-stat"><span>Cierres usados</span><strong id="v23StatPoints">0</strong></div>
     <div class="v23-stat"><span>Origen</span><strong id="v23StatSource">—</strong></div>
   </div>
   <div class="v23-chart-wrap v24-collapsed">
@@ -824,7 +860,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
     <svg id="v23ChartSvg" class="v23-chart-svg" viewBox="0 0 1100 380" preserveAspectRatio="none" role="img" aria-label="Gráfica histórica del activo seleccionado"></svg>
     <div id="v23ChartTip" class="v23-tip hidden"></div>
   </div>
-  <div class="v23-stage-foot"><span id="v23StageMessage"><b>Fácil de leer:</b> Día = cierres diarios; Semana = un cierre por semana; Mes = un cierre por mes; Año = un cierre por año.</span><div class="actions"><button id="v23ChartToggle" class="primary small" type="button">Desplegar gráfico</button><button id="v23CompleteHistory" class="secondary small" type="button">Completar historial disponible</button></div></div>
+  <div class="v23-stage-foot"><span id="v23StageMessage"><b>Periodo inteligente:</b> Inversor Fácil elige automáticamente la resolución más legible.</span><div class="actions"><button id="v23ChartToggle" class="primary small" type="button">Desplegar gráfico</button><button id="v23CompleteHistory" class="secondary small" type="button">Completar historial disponible</button></div></div>
 </div>
 
 
@@ -999,8 +1035,11 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
               <label for="marketSort">Ordenar resultados</label>
               <select id="marketSort">
                 <option value="default">Orden normal</option>
-                <option value="dailyDesc">Mejor rendimiento diario</option>
-                <option value="dailyAsc">Peor rendimiento diario</option>
+                <option value="dailyDesc">Ranking · Hoy</option>
+                <option value="weekDesc">Ranking · Semana</option>
+                <option value="monthDesc">Ranking · Mes</option>
+                <option value="yearDesc">Ranking · Año</option>
+                <option value="dailyAsc">Mayor caída hoy</option>
                 <option value="priceDesc">Mayor precio</option>
                 <option value="name">Nombre</option>
               </select>
@@ -1093,14 +1132,14 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <div class="history-toolbar-v18">
   <div>
-    <label for="historySort">Ordenar empresas por</label>
+    <label for="historySort">Ranking por</label>
     <select id="historySort"></select>
     <div id="historySortNote" class="history-sort-note"></div>
   </div>
   <div>
-    <label for="historyFocus">Periodo de referencia</label>
+    <label for="historyFocus">Periodo que determina el ranking</label>
     <select id="historyFocus"></select>
-    <div class="history-sort-note">Elige qué día, semana, mes o año determina el orden de las filas.</div>
+    <div class="history-sort-note">La posición #1, #2, #3… se calcula con el rendimiento real entre el primer y último cierre del periodo.</div>
   </div>
   <button id="openSortHelp" class="secondary" type="button">¿Cómo funciona el orden?</button>
 </div>
@@ -1182,8 +1221,8 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         <p class="muted" style="margin:0">Busca los mayores ganadores del día en EE. UU., combina acciones y ETF, excluye lo que ya está en tu catálogo y conserva un Top 50 para seguimiento.</p>
       </div>
       <div class="actions">
-        <button id="scanExternalRadar" class="primary">Actualizar Top 50 del día</button>
-        <button id="clearExternalRadar" class="danger">Borrar solo radar</button>
+        <button id="scanExternalRadar" class="primary v30-admin-only">Actualizar Top 50 del día</button>
+        <button id="clearExternalRadar" class="danger v30-admin-only">Borrar solo radar</button>
       </div>
     </div>
 
@@ -1210,7 +1249,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
           <option value="name">Nombre</option>
         </select>
       </div>
-      <div>
+      <div class="v30-admin-only">
         <label for="radarStockTarget">Empresas respaldo</label>
         <select id="radarStockTarget">
           <option value="50">50</option>
@@ -1219,7 +1258,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
           <option value="96">96</option>
         </select>
       </div>
-      <div>
+      <div class="v30-admin-only">
         <label for="radarEtfTarget">ETF respaldo</label>
         <select id="radarEtfTarget">
           <option value="10">10</option>
@@ -1262,7 +1301,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
       Con el plan gratuito de 8 créditos por minuto, analizar 500 empresas puede tardar alrededor de una hora. El avance se guarda para poder continuar después sin empezar desde cero.
     </div>
 
-    <div class="top500-toolbar">
+    <div class="top500-toolbar v30-admin-only">
       <div>
         <label for="top500Target">Tamaño del universo</label>
         <select id="top500Target">
@@ -1274,8 +1313,10 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
       <div>
         <label for="top500Sort">Ordenar por</label>
         <select id="top500Sort">
-          <option value="month">Mejor del mes en curso</option>
-          <option value="year">Mejor de ~1 año</option>
+          <option value="today">Ranking · Hoy</option>
+          <option value="week">Ranking · Semana</option>
+          <option value="month" selected>Ranking · Mes</option>
+          <option value="year">Ranking · Año</option>
           <option value="name">Nombre</option>
         </select>
       </div>
@@ -1302,12 +1343,12 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
     <div class="section-head" style="margin-top:16px">
       <div><h2>Clasificación</h2><p class="muted" style="margin:0">Se muestran hasta 100 resultados ordenados. Puedes agregar cualquiera a tu catálogo principal.</p></div>
-      <button id="top500Clear" class="danger small">Borrar análisis Top 500</button>
+      <button id="top500Clear" class="danger small v30-admin-only">Borrar análisis Top 500</button>
     </div>
     <div class="table-wrap">
       <table class="top500-table">
-        <thead><tr><th>#</th><th>Empresa</th><th>Símbolo</th><th>Bolsa</th><th>Mes actual</th><th>~1 año</th><th>Último cierre</th><th>Acción</th></tr></thead>
-        <tbody id="top500Rows"><tr><td colspan="8" class="empty">Todavía no hay resultados.</td></tr></tbody>
+        <thead><tr><th>#</th><th>Empresa</th><th>Símbolo</th><th>Bolsa</th><th>Hoy</th><th>Semana</th><th>Mes</th><th>Año</th><th>Último cierre</th><th>Acción</th></tr></thead>
+        <tbody id="top500Rows"><tr><td colspan="10" class="empty">Todavía no hay resultados.</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -2160,6 +2201,22 @@ function searchMatches(a,q){
   return text.includes(normalized);
 }
 
+
+function v31CatalogPeriodReturn(symbol,mode){
+  const asset=assets.find(a=>a.symbol===symbol);
+  if(mode==="dailyDesc"||mode==="dailyAsc")return Number.isFinite(asset?.dailyPercent)?Number(asset.dailyPercent):null;
+  const days=mode==="weekDesc"?7:mode==="monthDesc"?31:mode==="yearDesc"?366:null;
+  if(!days)return null;
+  try{
+    const history=marketHistoryLoad();
+    const rows=(history.records?.[symbol]||[]).filter(r=>r?.day&&Number.isFinite(Number(r.price))&&Number(r.price)>0).slice().sort((a,b)=>String(a.day).localeCompare(String(b.day)));
+    if(rows.length<2)return null;
+    const last=rows.at(-1),end=parseDayKey(last.day),start=new Date(end);start.setDate(start.getDate()-days);
+    const period=rows.filter(r=>parseDayKey(r.day)>=start);
+    if(period.length<2)return null;
+    const first=period[0];return (Number(last.price)/Number(first.price)-1)*100;
+  }catch{return null;}
+}
 function filteredAssets(){
   const q=$("search").value.trim().toLowerCase();
   const type=$("typeFilter").value;
@@ -2179,6 +2236,7 @@ function filteredAssets(){
   list.sort((a,b)=>{
     if(sort==="dailyDesc")return (Number.isFinite(b.dailyPercent)?b.dailyPercent:-Infinity)-(Number.isFinite(a.dailyPercent)?a.dailyPercent:-Infinity);
     if(sort==="dailyAsc")return (Number.isFinite(a.dailyPercent)?a.dailyPercent:Infinity)-(Number.isFinite(b.dailyPercent)?b.dailyPercent:Infinity);
+    if(["weekDesc","monthDesc","yearDesc"].includes(sort)){const A=v31CatalogPeriodReturn(a.symbol,sort),B=v31CatalogPeriodReturn(b.symbol,sort);return (B??-Infinity)-(A??-Infinity);}
     if(sort==="priceDesc")return b.price-a.price;
     if(sort==="name")return a.name.localeCompare(b.name);
     return 0;
@@ -2224,8 +2282,12 @@ function renderExplore(){
     const dailyText=Number.isFinite(a.dailyPercent)
       ?`${a.dailyPercent>=0?"+":""}${a.dailyPercent.toFixed(2)}% (${a.dailyChange>=0?"+":""}${usd(a.dailyChange)})`
       :"Sin dato diario";
+    const rankMode=$("marketSort")?.value||"default";
+    const rankValue=v31CatalogPeriodReturn(a.symbol,rankMode);
+    const rankLabels={dailyDesc:"Hoy",weekDesc:"Semana",monthDesc:"Mes",yearDesc:"Año",dailyAsc:"Hoy"};
+    const rankContext=rankLabels[rankMode]?`<div class="v31-rank-context">Ranking ${rankLabels[rankMode]}: ${Number.isFinite(rankValue)?(rankValue>=0?"+":"")+rankValue.toFixed(2)+"%":"S/A"}</div>`:"";
     return `<div class="asset-card" data-chart-symbol="${a.symbol}" data-chart-source="catalog">
-      <div class="investment-top"><h3>${a.name}</h3><span class="rank-badge">${index+1}</span></div>
+      <div class="investment-top"><div><h3>${a.name}</h3>${rankContext}</div><span class="rank-badge">${index+1}</span></div>
       <div class="asset-meta">${a.symbol} · ${a.country} · ${a.sector}${a.custom?" · Agregado desde internet":""} ${priceState(a)}</div>
       <div style="margin:8px 0">
         <span class="daily-chip ${dailyClass}">${dailyText}</span>
@@ -3599,7 +3661,8 @@ function dailyHistoryHTML(history,latestRun){
       parseDayKey(day).toLocaleDateString("es-MX",{weekday:"long"}).toLowerCase()
     );
     const state=run?"Con datos":(marketDay?"S/A":"Sin sesión");
-    return `<th>${weekdayDayLabel(day,true)}<br><small>${state}</small></th>`;
+    const d=parseDayKey(day),dow=d.toLocaleDateString("es-MX",{weekday:"long"}),date=d.toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"});
+    return `<th class="history-day-head"><span class="dow">${dow.charAt(0).toUpperCase()+dow.slice(1)}</span><span class="date">${date}</span><span class="state">${state}</span></th>`;
   }).join("");
 
   if(!symbols.length){
@@ -3611,7 +3674,7 @@ function dailyHistoryHTML(history,latestRun){
     <tbody><tr><td colspan="8" class="empty">Todavía no hay empresas Top 20 registradas en esta ventana.</td></tr></tbody></table></div>`;
   }
 
-  const body=symbols.map(symbol=>{
+  const body=symbols.map((symbol,rowIndex)=>{
     const cells=days.map((day,i)=>{
       const run=runs[i];
       if(!run){
@@ -3624,7 +3687,7 @@ function dailyHistoryHTML(history,latestRun){
       const rank=runRank(run,symbol);
       return `<td class="history-cell">${rank?`<span class="history-rank-mini">#${rank} Top 20</span>`:""}<strong>${priceHTML(rec)}</strong><small>${pctHTML(rec.dailyPercent)} diario</small></td>`;
     }).join("");
-    return `<tr><td><strong>${symbolName(history,symbol)}</strong><br><span class="muted">${symbol}</span></td>${cells}</tr>`;
+    return `<tr><td><span class="history-row-rank">#${rowIndex+1}</span><strong>${symbolName(history,symbol)}</strong><br><span class="muted">${symbol}</span></td>${cells}</tr>`;
   }).join("");
 
   return `${historyReadStrip("daily")}<div class="history-period-head"><div>
@@ -3650,7 +3713,7 @@ function weeklyHistoryHTML(history,latestRun){
     return `<th>${dayLabel(b.start)}–${dayLabel(b.end)}<br><small>${n} día${n===1?"":"s"} con datos</small></th>`;
   }).join("");
 
-  const rows=symbols.map(symbol=>{
+  const rows=symbols.map((symbol,rowIndex)=>{
     const cells=blocks.map(b=>{
       const perf=periodPerformance(history,symbol,b.start,b.end);
       const apps=topAppearancesInRange(history,symbol,b.start,b.end);
@@ -3658,7 +3721,7 @@ function weeklyHistoryHTML(history,latestRun){
       if(perf.count<2)return `<td class="history-cell"><strong>S/A</strong><small>1 cierre · Top 20: ${apps}</small></td>`;
       return `<td class="history-cell"><strong>${pctHTML(perf.value)}</strong><small>${priceHTML(perf.first)} → ${priceHTML(perf.last)} · Top 20: ${apps}</small></td>`;
     }).join("");
-    return `<tr><td><strong>${symbolName(history,symbol)}</strong><br><span class="muted">${symbol}</span></td>${cells}</tr>`;
+    return `<tr><td><span class="history-row-rank">#${rowIndex+1}</span><strong>${symbolName(history,symbol)}</strong><br><span class="muted">${symbol}</span></td>${cells}</tr>`;
   }).join("");
 
   return `${historyReadStrip("weekly")}<div class="history-period-head"><div><div class="history-period-title">Últimas 4 semanas</div><div class="history-period-subtitle">Cuatro bloques consecutivos de 7 días, terminando en la fecha actual del equipo. Los días sin sesión bursátil simplemente no generan cierre.</div></div></div><div class="history-scroll"><table class="history-matrix"><thead><tr><th>Empresa</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -3682,7 +3745,7 @@ function monthlyHistoryHTML(history,latestRun){
   if(!symbols.length)return `<div class="history-period-head"><div><div class="history-period-title">Historial mensual</div></div>${picker}</div>${historyEmptyHTML("No hay capturas para ese año.")}`;
 
   const headers=months.map(m=>`<th>${new Date(year,m,1).toLocaleDateString("es-MX",{month:"short"})}<br><small>${yearRuns.filter(r=>parseDayKey(r.day).getMonth()===m).length} act.</small></th>`).join("");
-  const rows=symbols.map(symbol=>{
+  const rows=symbols.map((symbol,rowIndex)=>{
     const cells=months.map(m=>{
       const b=monthBounds(year,m);
       const perf=periodPerformance(history,symbol,b.start,b.end);
@@ -3691,7 +3754,7 @@ function monthlyHistoryHTML(history,latestRun){
       if(perf.count<2)return `<td class="history-cell"><strong>S/A</strong><small>1 captura · Top 20: ${apps}</small></td>`;
       return `<td class="history-cell"><strong>${pctHTML(perf.value)}</strong><small>${priceHTML(perf.first)} → ${priceHTML(perf.last)} · Top 20: ${apps}</small></td>`;
     }).join("");
-    return `<tr><td><strong>${symbolName(history,symbol)}</strong><br><span class="muted">${symbol}</span></td>${cells}</tr>`;
+    return `<tr><td><span class="history-row-rank">#${rowIndex+1}</span><strong>${symbolName(history,symbol)}</strong><br><span class="muted">${symbol}</span></td>${cells}</tr>`;
   }).join("");
 
   return `${historyReadStrip("monthly")}<div class="history-period-head"><div><div class="history-period-title">Historial mensual · ${year}</div><div class="history-period-subtitle">Los 12 meses del año. Apreciación o depreciación entre la primera y la última captura disponible de cada mes.</div></div>${picker}</div><div class="history-scroll"><table class="history-matrix"><thead><tr><th>Empresa</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -3702,7 +3765,7 @@ function annualHistoryHTML(history,latestRun){
   const symbols=sortHistorySymbols(history,symbolsFromRuns(history.runs||[]));
   if(!years.length || !symbols.length)return historyEmptyHTML("Todavía no hay información anual disponible.");
   const headers=years.map(y=>`<th>${y}<br><small>${(history.runs||[]).filter(r=>r&&parseDayKey(r.day).getFullYear()===y).length} act.</small></th>`).join("");
-  const rows=symbols.map(symbol=>{
+  const rows=symbols.map((symbol,rowIndex)=>{
     const cells=years.map(y=>{
       const start=`${y}-01-01`,end=`${y}-12-31`;
       const perf=periodPerformance(history,symbol,start,end);
@@ -3711,7 +3774,7 @@ function annualHistoryHTML(history,latestRun){
       if(perf.count<2)return `<td class="history-cell"><strong>S/A</strong><small>1 captura · Top 20: ${apps}</small></td>`;
       return `<td class="history-cell"><strong>${pctHTML(perf.value)}</strong><small>${priceHTML(perf.first)} → ${priceHTML(perf.last)} · Top 20: ${apps}</small></td>`;
     }).join("");
-    return `<tr><td><strong>${symbolName(history,symbol)}</strong><br><span class="muted">${symbol}</span></td>${cells}</tr>`;
+    return `<tr><td><span class="history-row-rank">#${rowIndex+1}</span><strong>${symbolName(history,symbol)}</strong><br><span class="muted">${symbol}</span></td>${cells}</tr>`;
   }).join("");
   return `${historyReadStrip("annual")}<div class="history-period-head"><div><div class="history-period-title">Historial anual</div><div class="history-period-subtitle">Compara los años que vayas acumulando. El rendimiento anual usa la primera y última captura disponibles de cada año.</div></div></div><div class="history-scroll"><table class="history-matrix"><thead><tr><th>Empresa</th>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
@@ -4234,9 +4297,9 @@ function renderExternalRadar(){
         <div class="radar-metric"><span>30 días</span><strong>${radarMetricHTML(r.metrics.month)}</strong></div>
         <div class="radar-metric"><span>1 año</span><strong>${radarMetricHTML(r.metrics.year)}</strong></div>
       </div>
-      <div class="radar-actions">
+      <div class="radar-actions">${(typeof v27IsAdmin==="function"&&v27IsAdmin())?`
         <button class="secondary small radarLoadHistory" data-symbol="${r.symbol}">${ready?"Actualizar histórico":"Cargar 1 año"}</button>
-        <button class="primary small radarAddCatalog" data-symbol="${r.symbol}">Agregar a mi catálogo</button>
+        <button class="primary small radarAddCatalog" data-symbol="${r.symbol}">Agregar a mi catálogo</button>`:`<span class="muted">Vista de seguimiento</span>`}
       </div>
     </div>`;
   }).join("");
@@ -5257,6 +5320,9 @@ function top500MetricsFromSeries(values){
   const rows=(values||[]).map(v=>({day:String(v.datetime||v.day||"").slice(0,10),close:Number(v.close)})).filter(v=>v.day&&Number.isFinite(v.close)&&v.close>0).sort((a,b)=>a.day.localeCompare(b.day));
   if(rows.length<2)return null;
   const last=rows[rows.length-1];
+  const prev=rows.at(-2);
+  const weekTarget=new Date(`${last.day}T12:00:00`);weekTarget.setDate(weekTarget.getDate()-7);
+  const weekKey=weekTarget.toISOString().slice(0,10),weekFirst=rows.find(r=>r.day>=weekKey)||rows[0];
   const monthStart=top500MonthStart(last.day);
   const monthFirst=rows.find(r=>r.day>=monthStart)||rows[0];
   const yearTarget=new Date(`${last.day}T12:00:00`);yearTarget.setDate(yearTarget.getDate()-365);
@@ -5265,6 +5331,8 @@ function top500MetricsFromSeries(values){
   return {
     day:last.day,
     price:last.close,
+    today:Number(prev?.close)>0?(last.close/prev.close-1)*100:null,
+    week:Number(weekFirst.close)>0?(last.close/weekFirst.close-1)*100:null,
     month:Number(monthFirst.close)>0?(last.close/monthFirst.close-1)*100:null,
     year:Number(yearFirst.close)>0?(last.close/yearFirst.close-1)*100:null,
     points:rows.length
@@ -5386,10 +5454,10 @@ function renderTop500(){
   $("top500BestYear").textContent=bestYear?`${bestYear.symbol} ${d.metrics[bestYear.symbol].year>=0?"+":""}${d.metrics[bestYear.symbol].year.toFixed(1)}%`:"—";
   const sort=$("top500Sort")?.value||"month";
   const rows=[...analyzed].sort((a,b)=>sort==="name"?a.name.localeCompare(b.name):((d.metrics[b.symbol]?.[sort]??-Infinity)-(d.metrics[a.symbol]?.[sort]??-Infinity))).slice(0,100);
-  if(!rows.length){$("top500Rows").innerHTML='<tr><td colspan="8" class="empty">Carga el universo y ejecuta el análisis para generar la clasificación.</td></tr>';return;}
+  if(!rows.length){$("top500Rows").innerHTML='<tr><td colspan="10" class="empty">Carga el universo y ejecuta el análisis para generar la clasificación.</td></tr>';return;}
   $("top500Rows").innerHTML=rows.map((r,i)=>{const m=d.metrics[r.symbol]||{};return `<tr data-chart-symbol="${r.symbol}" data-chart-source="top500">
     <td><span class="rank-badge">${i+1}</span></td><td class="top500-name"><strong>${r.name}</strong></td><td>${r.symbol}</td><td>${r.exchange||"—"}</td>
-    <td>${top500Pct(m.month)}</td><td>${top500Pct(m.year)}</td><td>${m.price?usd(m.price):"—"}</td>
+    <td>${top500Pct(m.today)}</td><td>${top500Pct(m.week)}</td><td>${top500Pct(m.month)}</td><td>${top500Pct(m.year)}</td><td>${m.price?usd(m.price):"—"}</td>
     <td><button class="primary small top500Add" data-symbol="${r.symbol}">${assets.some(a=>a.symbol===r.symbol)?"Ya en catálogo":"Agregar"}</button></td></tr>`;}).join("");
   document.querySelectorAll(".top500Add").forEach(b=>{if(assets.some(a=>a.symbol===b.dataset.symbol))b.disabled=true;else b.addEventListener("click",()=>addTop500ToCatalog(b.dataset.symbol));});
 }
@@ -5601,8 +5669,8 @@ function v23SetTarget(symbol,source="catalog",lock=false){if(!symbol)return;v23C
 function v23HistoryMessage(count,source){if(count<=1)return '<b>Solo hay un dato.</b> Para que la línea tenga movimiento real necesitas cargar/reconstruir más cierres.';if(count<5)return `<b>Hay ${count} cierres.</b> La gráfica funciona, pero todavía se verá casi estática. Completa el historial para verla cobrar vida.`;return `<b>${count} cierres disponibles.</b> Pasa el cursor por la línea para leer fecha y precio. Origen: ${source}.`;}
 function renderV23Chart(){
   const svg=$("v23ChartSvg"),tip=$("v23ChartTip");if(!svg)return;const symbol=v23ChartState.symbol;if(!symbol){svg.innerHTML='<foreignObject x="0" y="0" width="1100" height="380"><div xmlns="http://www.w3.org/1999/xhtml" class="v23-empty"><div><strong>Selecciona una empresa</strong>Pasa el cursor por una tarjeta o haz clic sobre ella.</div></div></foreignObject>';return;}
-  const data=v23RowsFor(symbol,v23ChartState.source);const raw=v23WindowRows(data.rows,v23ChartState.window);const rows=v23Aggregate(raw,v23ChartState.interval);const name=v23GetName(symbol);
-  $("v23StageTitle").textContent=`${name} · ${symbol}`;$("v23StageSub").textContent=`Viendo ${v23ChartState.interval==="daily"?'cierres diarios':v23ChartState.interval==="weekly"?'un cierre por semana':v23ChartState.interval==="monthly"?'un cierre por mes':'un cierre por año'} · ${v23ChartState.window==="all"?'todo el historial':v23ChartState.window}`;$("v23StatSource").textContent=data.source;$("v23StatPoints").textContent=rows.length;$("v23StageMessage").innerHTML=v23HistoryMessage(data.rows.length,data.source);
+  const data=v23RowsFor(symbol,v23ChartState.source);const raw=v23WindowRows(data.rows,v23ChartState.window);v23ChartState.interval=(v23ChartState.window==="1m"||v23ChartState.window==="3m")?"daily":(v23ChartState.window==="6m"||v23ChartState.window==="1y")?"weekly":"monthly";const rows=v23Aggregate(raw,v23ChartState.interval);const name=v23GetName(symbol);
+  $("v23StageTitle").textContent=`${name} · ${symbol}`;$("v23StageSub").textContent=`Periodo ${v23ChartState.window==="all"?"completo":v23ChartState.window} · resolución automática: ${v23ChartState.interval==="daily"?"cierres diarios":v23ChartState.interval==="weekly"?"cierres semanales":"cierres mensuales"}`;$("v23StatSource").textContent=data.source;$("v23StatPoints").textContent=rows.length;$("v23StageMessage").innerHTML=v23HistoryMessage(data.rows.length,data.source);
   if(!rows.length){$("v23StagePrice").textContent="—";$("v23StageChange").textContent="Sin historial";$("v23StatStart").textContent=$("v23StatLast").textContent=$("v23StatMove").textContent="—";svg.innerHTML='<foreignObject x="0" y="0" width="1100" height="380"><div xmlns="http://www.w3.org/1999/xhtml" class="v23-empty"><div><strong>No hay cierres para graficar</strong>Usa “Completar historial disponible” y vuelve a seleccionar este activo.</div></div></foreignObject>';return;}
   const start=Number(rows[0].price),last=Number(rows.at(-1).price),move=start?((last/start)-1)*100:0,up=move>=0;$("v23StagePrice").textContent=v23Usd(last);$("v23StageChange").textContent=`${move>=0?'+':''}${move.toFixed(2)}%`;$("v23StageChange").className=`v23-stage-change ${up?'v23-up':'v23-down'}`;$("v23StatStart").textContent=v23Usd(start);$("v23StatLast").textContent=v23Usd(last);$("v23StatMove").textContent=`${move>=0?'+':''}${move.toFixed(2)}%`;$("v23StatMove").className=up?'v23-up':'v23-down';
   if(rows.length===1){svg.innerHTML=`<foreignObject x="0" y="0" width="1100" height="380"><div xmlns="http://www.w3.org/1999/xhtml" class="v23-empty"><div><strong>${v23Usd(last)}</strong>Solo existe 1 cierre guardado para ${symbol}. La gráfica no inventa movimientos; completa el historial para ver la curva real.</div></div></foreignObject>`;return;}
