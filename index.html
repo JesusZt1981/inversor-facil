@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inversor Fácil V29 · Admin + Usuarios</title>
+<title>Inversor Fácil V30 · Catálogo Admin Compartido</title>
 <style>
 :root{
   --bg:#15110f;--panel:#211b19;--panel2:#2a211e;--line:#4a3932;
@@ -556,6 +556,14 @@ tr[data-chart-symbol]{transition:background .15s ease,box-shadow .15s ease}tr[da
 /* La gráfica V22 anterior se conserva en el código por compatibilidad, pero V23 usa el visor universal. */
 #tab-marketHistory>.market-chart-shell{display:none!important}
 
+
+/* V30 */
+#v26MenuButton,#v27MenuButtonTop{background:linear-gradient(135deg,#1878b9,#6d55c8)!important;color:#fff!important;border:1px solid rgba(122,207,255,.58)!important;box-shadow:0 7px 22px rgba(36,122,204,.22)!important}
+.v30-user-catalog-info{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px;padding:9px 11px;border-radius:11px;background:rgba(25,43,61,.72);border:1px solid #395775;color:#b9c9da;font-size:12px}.v30-user-catalog-info strong{color:#74cfff}
+body.v30-user .v30-admin-only{display:none!important}body.v30-user #tab-settings .card:has(#marketKey),body.v30-user #tab-settings .card:has(#updateFx){display:none!important}body.v30-user [data-help="apikey"],body.v30-user [data-help="onlineSearch"]{display:none!important}body.v30-admin #v30SharedCatalogInfo{display:none}
+#v27AdminButton{background:linear-gradient(135deg,#1878b9,#6d55c8)!important;color:#fff!important;border:1px solid #64bfff!important}#v27UpdatePublish{background:linear-gradient(135deg,#16a47a,#2d82d5)!important;color:white!important}
+#v30DesktopLeft,#v30DesktopRight{display:none}
+@media(min-width:900px){body.v30-wide .app{width:auto!important;max-width:none!important;margin-left:clamp(190px,18vw,255px)!important;margin-right:clamp(210px,20vw,285px)!important;padding-left:12px!important;padding-right:12px!important}#v30DesktopLeft,#v30DesktopRight{display:flex;position:fixed;top:12px;bottom:34px;z-index:28;flex-direction:column;gap:10px;overflow:auto;padding:0 3px 8px;scrollbar-width:thin}#v30DesktopLeft{left:8px;width:clamp(174px,17vw,240px)}#v30DesktopRight{right:8px;width:clamp(194px,19vw,270px)}#v30DesktopLeft header{display:block;margin:0;padding:13px;border-radius:14px;background:linear-gradient(145deg,rgba(15,25,37,.97),rgba(20,20,31,.96));border:1px solid #334c68}#v30DesktopLeft header h1{font-size:clamp(24px,2.4vw,35px);line-height:1.03}#v30DesktopLeft header .badge{margin-top:8px}#v30DesktopLeft .notice{margin:0;font-size:12px;line-height:1.42}#v30DesktopRight .v27-top-strip{position:static!important;display:block!important;margin:0;padding:11px}#v30DesktopRight .v27-top-actions{margin-top:9px;display:grid!important}#v30DesktopRight .v27-top-actions button{width:100%}#v30DesktopRight .grid.grid4{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}#v30DesktopRight .metric{min-height:auto;padding:11px}#v30DesktopRight .metric strong{font-size:22px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -689,6 +697,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 </div>
 
 <div class="app">
+<div id="v30DesktopLeft"></div><div id="v30DesktopRight"></div>
 
 <div id="v24UserBar" class="hidden">
   <span id="v24UserEmail" class="user-pill">—</span>
@@ -735,24 +744,20 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V29</h1>
+    <h1>Inversor Fácil V30</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
 </header>
 
-<div class="notice">
-  Usa esta app como práctica. <b>Precio demostrativo</b> significa que el valor no cambiará solo. 
-  Para ver precios reales, configura Twelve Data y pulsa <b>Actualizar precio</b>.
-  <button class="help-btn" data-help="prices" type="button">?</button>
-</div>
+<div class="notice" id="v30MarketNotice">Usa esta app como práctica. <b>Los precios compartidos son administrados por Inversor Fácil.</b> Tu simulación no compra ni vende dinero real. <button class="help-btn" data-help="prices" type="button">?</button></div>
 
 
 <section id="v27TopStrip" class="v27-top-strip">
   <div class="v27-fx-live"><span>USD/MXN · DOF</span><strong id="v27FxTop">—</strong><small id="v27FxTopDate">Actualizando automáticamente…</small></div>
   <div class="v27-top-actions">
     <button id="v27MenuButtonTop" type="button" class="secondary small">☰ Menú</button>
-    <button id="v27AdminButton" type="button" class="primary small hidden">⚙ Administración</button>
+    <button id="v27AdminButton" type="button" class="primary small hidden">⚙ Admin · Catálogo</button>
   </div>
 </section>
 
@@ -970,7 +975,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
       </div>
       <div class="status">Consejo: escribe “Waymo” y aparecerá Alphabet, porque Waymo no cotiza por separado.</div>
 
-      <details style="margin-top:12px" open>
+      <details id="v30OnlineCatalogAdmin" class="v30-admin-only" style="margin-top:12px" open>
         <summary>¿No aparece en el catálogo? <button class="help-btn" data-help="onlineSearch" type="button">?</button></summary>
         <p class="muted" style="font-size:13px">
           Búscala en internet mediante Twelve Data y agrégala al catálogo con un clic.
@@ -983,8 +988,8 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
     </aside>
     <div>
       <div class="card">
-        <div class="section-head"><h2>Resultados</h2><span id="resultCount" class="badge"></span></div>
-        <div class="market-toolbar">
+        <div class="section-head"><h2>Resultados</h2><span id="resultCount" class="badge"></span></div><div id="v30SharedCatalogInfo" class="v30-user-catalog-info"><strong>Catálogo compartido</strong><span>Los precios disponibles los publica el administrador y se sincronizan automáticamente desde Supabase.</span></div>
+        <div id="v30CatalogUpdateAdmin" class="market-toolbar v30-admin-only">
           <div>
             <strong>Actualizar todo el catálogo por turnos <button class="help-btn" data-help="dailyMarket" type="button">?</button></strong>
             <div class="muted">El plan gratuito permite 8 créditos por minuto. La app actualizará bloques de hasta 8 activos y esperará automáticamente el siguiente minuto.</div>
@@ -1003,10 +1008,10 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
             <button id="updateVisibleMarket" class="primary">Iniciar actualización completa</button>
           </div>
         </div>
-        <div id="visibleMarketStatus" class="status">
+        <div id="visibleMarketStatus" class="status v30-admin-only">
           Cada símbolo consume un crédito aunque se envíen varios juntos. La actualización completa se hará en bloques de 8.
         </div>
-        <div id="catalogQueue" class="queue-progress hidden">
+        <div id="catalogQueue" class="queue-progress hidden v30-admin-only">
           <div class="queue-track"><div id="catalogQueueFill" class="queue-fill" style="width:0%"></div></div>
           <div class="queue-meta">
             <span id="catalogQueueText">0 de 0 procesados</span>
@@ -1017,7 +1022,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
             <button id="cancelCatalogQueue" class="danger small">Cancelar</button>
           </div>
         </div>
-        <div id="catalogSyncSummary" class="catalog-summary hidden"></div>
+        <div id="catalogSyncSummary" class="catalog-summary hidden v30-admin-only"></div>
         <div id="catalogSyncDetails" class="sync-detail hidden"></div>
         <div id="filterHint" class="status hidden"></div>
         <div id="assetGrid" class="asset-grid"></div>
@@ -4598,6 +4603,7 @@ async function processCatalogBatch(batch,key){
 }
 
 async function updateVisibleMarket(){
+  if(typeof v27IsAdmin==="function" && !v27IsAdmin()){showToast("La actualización del catálogo está reservada al administrador.","warn");return false;}
   const key=$("marketKey").value.trim();
   if(!key){
     $("visibleMarketStatus").innerHTML='Primero pega tu clave de Twelve Data en <b>Configuración</b>.';
@@ -5459,6 +5465,7 @@ async function v27LoadProfile(user){
   const {data,error}=await v24Supabase.from("profiles").select("id,email,role,created_at,last_seen").eq("id",user.id).maybeSingle();
   if(!error&&data)v27Profile=data;
   document.getElementById("v27AdminButton")?.classList.toggle("hidden",!v27IsAdmin());
+  if(typeof window.v30ApplyPermissions==="function") window.v30ApplyPermissions();
   return v27Profile;
 }
 async function v27LoadSharedCatalog(){
@@ -5495,7 +5502,7 @@ function v27OpenAdmin(open=true){$("v27AdminPanel")?.classList.toggle("hidden",!
 document.getElementById("v27AdminButton")?.addEventListener("click",()=>v27OpenAdmin(true));
 document.getElementById("v27CloseAdmin")?.addEventListener("click",()=>v27OpenAdmin(false));
 document.getElementById("v27PublishOnly")?.addEventListener("click",async()=>{const s=$("v27AdminStatus");try{s.textContent="Publicando catálogo actual…";const n=await v27PublishCatalog();s.textContent=`Publicado: ${n} activos compartidos.`;s.className="status ok";}catch(e){s.textContent=e.message;s.className="status error";}});
-document.getElementById("v27UpdatePublish")?.addEventListener("click",async()=>{const s=$("v27AdminStatus");try{s.textContent="Actualizando todo el catálogo con Twelve Data…";s.className="status";await updateVisibleMarket();s.textContent="Publicando resultados para todos los usuarios…";const n=await v27PublishCatalog();s.textContent=`Listo: ${n} activos actualizados/publicados.`;s.className="status ok";}catch(e){s.textContent=e.message;s.className="status error";}});
+document.getElementById("v27UpdatePublish")?.addEventListener("click",async()=>{const s=$("v27AdminStatus");try{if(!v27IsAdmin())throw new Error("Solo el administrador puede actualizar y publicar.");if(!$("marketKey").value.trim())throw new Error("Primero guarda tu clave de Twelve Data en Configuración.");s.textContent="Actualizando todo el catálogo con Twelve Data…";s.className="status";const ok=await updateVisibleMarket();if(ok===false)throw new Error("No se completó la actualización del catálogo.");s.textContent="Publicando resultados para todos los usuarios…";const n=await v27PublishCatalog();s.textContent=`Listo: ${n} activos actualizados y publicados para todos.`;s.className="status ok";}catch(e){s.textContent=e.message;s.className="status error";}});
 
 // ===== V24 · Supabase Auth / Google =====
 const V24_SUPABASE_URL = "https://bcabfavdxxzauahpbmsa.supabase.co";
@@ -5645,6 +5652,9 @@ if($("marketKey").value.trim()){
 
 setTimeout(()=>{try{renderExternalRadar()}catch{}},1800);
 setTimeout(()=>{v23AttachDelegation();mountV23MarketStage("dashboard");},250);
+</script>
+<script>
+(function(){let last=0;window.v30ApplyPermissions=function(){const a=(()=>{try{return typeof v27IsAdmin==="function"&&v27IsAdmin()}catch(e){return false}})();document.body.classList.toggle("v30-admin",a);document.body.classList.toggle("v30-user",!a);document.querySelectorAll(".v30-admin-only").forEach(e=>e.style.display=a?"":"none");if(!a)document.getElementById("v27AdminPanel")?.classList.add("hidden");const n=document.getElementById("v30MarketNotice");if(n)n.innerHTML=a?'Modo administrador. <b>Actualiza y publica el catálogo</b> para que todos reciban los mismos precios. <button class="help-btn" data-help="prices" type="button">?</button>':'Usa esta app como práctica. <b>Los precios compartidos son administrados por Inversor Fácil.</b> Tu simulación no compra ni vende dinero real. <button class="help-btn" data-help="prices" type="button">?</button>'};function layout(){const w=matchMedia("(min-width:900px)").matches;document.body.classList.toggle("v30-wide",w);const app=document.querySelector(".app"),l=document.getElementById("v30DesktopLeft"),r=document.getElementById("v30DesktopRight");if(!app||!l||!r)return;const h=document.querySelector(".app > header,#v30DesktopLeft > header"),n=document.querySelector(".app > .notice,#v30DesktopLeft > .notice"),t=document.getElementById("v27TopStrip"),m=document.querySelector(".app > section.grid.grid4,#v30DesktopRight > section.grid.grid4");if(w){if(h)l.appendChild(h);if(n)l.appendChild(n);if(t)r.appendChild(t);if(m)r.appendChild(m)}else{const a=document.getElementById("helpBackdrop");if(h)app.insertBefore(h,a.nextSibling);if(n)app.insertBefore(n,h.nextSibling);const mob=document.getElementById("v26MobileNav");if(t)app.insertBefore(t,mob);if(m)app.insertBefore(m,mob)}}async function sync(force=false){if(typeof v27LoadSharedCatalog!=="function")return;const now=Date.now();if(!force&&now-last<60000)return;last=now;try{await v27LoadSharedCatalog()}catch(e){}}setInterval(()=>sync(false),300000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")sync(false)});addEventListener("focus",()=>sync(false));addEventListener("resize",layout);document.addEventListener("DOMContentLoaded",()=>{layout();setTimeout(()=>{v30ApplyPermissions();sync(true)},700);setTimeout(v30ApplyPermissions,1800)})})();
 </script>
 </body>
 </html>
