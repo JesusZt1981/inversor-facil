@@ -840,7 +840,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V37</h1>
+    <h1>Inversor Fácil V38</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -946,7 +946,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
           <div class="v28-admin-subhead"><h3>Top 500 · control rápido</h3><span class="badge">SOLO ADMIN</span></div>
           <p class="muted">Estos botones controlan el mismo módulo Top 500. El universo no es aleatorio: se construye de forma determinista con símbolos elegibles de NASDAQ/NYSE/AMEX y luego se ordena por rendimiento.</p>
           <div class="actions">
-            <button id="v33Top500Load" class="secondary">1. Cargar universo 500</button>
+            <button id="v33Top500Load" class="secondary">1. Cargar universo elegido</button>
             <button id="v33Top500Analyze" class="primary">2. Analizar hasta 5 años</button>
             <button id="v33Top500Open" class="secondary">Abrir Top 500</button>
           </div>
@@ -1384,16 +1384,19 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
     <div class="top500-note">
       <b>Qué hace:</b> descarga acciones desde Twelve Data, prioriza NASDAQ, NYSE y AMEX de forma determinista (no aleatoria), conserva hasta 500 símbolos y analiza hasta 5 años de cierres históricos. <b>Importante:</b> “Top 500” significa el universo analizado; no afirma que sean las 500 mayores por capitalización. 
-      Con el plan gratuito de 8 créditos por minuto, analizar 500 empresas puede tardar alrededor de una hora. El avance se guarda para poder continuar después sin empezar desde cero.
+      Para probar el correo puedes empezar con solo 20 empresas. Después puedes ampliar a 100, 200, 300, 400 o 500. Con el plan gratuito de Twelve Data el análisis grande tarda más; el avance se guarda para continuar después.
     </div>
 
     <div id="v33Top500Toolbar" class="top500-toolbar v30-admin-only">
       <div>
         <label for="top500Target">Tamaño del universo</label>
         <select id="top500Target">
+          <option value="20" selected>20 empresas · prueba rápida</option>
           <option value="100">100 empresas</option>
-          <option value="250">250 empresas</option>
-          <option value="500" selected>500 empresas</option>
+          <option value="200">200 empresas</option>
+          <option value="300">300 empresas</option>
+          <option value="400">400 empresas</option>
+          <option value="500">500 empresas</option>
         </select>
       </div>
       <div>
@@ -1419,7 +1422,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
     
 <div class="v35-top20-note">
-  <b>Top 20 por correo:</b> se toma de las empresas ya analizadas de este universo (hasta 500), aunque no estén agregadas al catálogo principal.
+  <b>Top 20 por correo:</b> para la prueba puedes analizar 20 empresas y generar el correo inmediatamente. Después, al ampliar el universo, el Top 20 se recalcula con todas las empresas analizadas.
 </div>
 
 <div id="v34Top500RoleStatus" class="v34-role-status">Comprobando permisos de administrador…</div>
@@ -5464,7 +5467,7 @@ function top500NormalizeSeries(payload,symbols){
 async function top500FetchUniverse(){
   const key=$("marketKey").value.trim();
   if(!key){top500Status("Primero guarda tu clave de Twelve Data en Configuración.","error");showTab("settings");return;}
-  const target=Number($("top500Target").value)||500;
+  const target=Number($("top500Target").value)||20;
   top500Status(`Descargando universo de acciones de EE. UU. para seleccionar ${target} empresas…`);
   $("top500LoadUniverse").disabled=true;
   try{
@@ -5733,7 +5736,7 @@ function addTop500ToCatalog(symbol){
 function renderTop500(){
   if(!$("top500Rows"))return;
   const d=top500Load();
-  if($("top500Target"))$("top500Target").value=String(d.target||500);
+  if($("top500Target"))$("top500Target").value=String(d.target||20);
   const analyzed=d.universe.filter(x=>Number.isFinite(d.metrics?.[x.symbol]?.price));
   $("top500UniverseCount").textContent=d.universe.length;
   $("top500AnalyzedCount").textContent=analyzed.length;
@@ -6163,10 +6166,12 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   document.getElementById("v33Top500Load")?.addEventListener("click",()=>{
   if(!v27IsAdmin()){v33AdminTop500Status("No se reconocieron permisos Admin.","error");return;}
-  const target=document.getElementById("top500Target");if(target)target.value="500";
+  const target=document.getElementById("top500Target");
+  const qty=Number(target?.value)||20;
   const real=document.getElementById("top500LoadUniverse");
   if(!real){v33AdminTop500Status("No se encontró el control Top 500.","error");return;}
-  real.click();v33AdminTop500Status("Cargando universo de 500 empresas…");
+  real.click();
+  v33AdminTop500Status(`Cargando universo elegido: ${qty} empresas…`);
 });
   document.getElementById("v33Top500Analyze")?.addEventListener("click",()=>{
   if(!v27IsAdmin()){v33AdminTop500Status("No se reconocieron permisos Admin.","error");return;}
