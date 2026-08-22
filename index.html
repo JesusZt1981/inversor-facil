@@ -840,7 +840,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V36</h1>
+    <h1>Inversor Fácil V37</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -1419,7 +1419,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
     
 <div class="v35-top20-note">
-  <b>Top 20 por correo:</b> se toma de este universo Top 500 analizado, aunque una empresa todavía no esté agregada al catálogo principal.
+  <b>Top 20 por correo:</b> se toma de las empresas ya analizadas de este universo (hasta 500), aunque no estén agregadas al catálogo principal.
 </div>
 
 <div id="v34Top500RoleStatus" class="v34-role-status">Comprobando permisos de administrador…</div>
@@ -5396,7 +5396,17 @@ document.addEventListener("click",event=>{
 
 // ===== V21 · Universo Top 500: mejores del mes / ~1 año =====
 const TOP500_KEY="inversorFacilUniverse500V21";
-const top500QueueState={running:false,paused:false,cancelled:false,total:0,processed:0,batchSize:8};
+const top500QueueState={
+  running:false,
+  paused:false,
+  cancelled:false,
+  total:0,
+  processed:0,
+  intervalSeconds:8.5,
+  waiting:false,
+  currentSymbol:"",
+  consecutive429:0
+};
 
 function top500Load(){
   try{
@@ -5476,62 +5486,239 @@ async function top500FetchUniverse(){
 }
 
 function top500QueueUI(){
-  const q=top500QueueState,total=q.total||0,done=Math.min(q.processed,total),pct=total?done/total*100:0;
+  const q=top500QueueState;
+  const total=q.total||0;
+  const done=Math.min(q.processed,total);
+  const pct=total?done/total*100:0;
+
   $("top500Queue").classList.toggle("hidden",!q.running && done===0);
   $("top500QueueFill").style.width=`${pct}%`;
-  $("top500QueueText").textContent=`${done} de ${total} procesados`;
-  if(q.cancelled)$("top500QueueTime").textContent="Cancelado";
-  else if(q.paused)$("top500QueueTime").textContent="Pausado";
-  else if(q.running){const batches=Math.ceil(Math.max(0,total-done)/q.batchSize);$("top500QueueTime").textContent=batches?`≈ ${batches} minuto${batches===1?"":"s"} restantes al límite gratuito`:`Finalizando`;}
-  else $("top500QueueTime").textContent="Terminado";
+  $("top500QueueText").textContent=`${done} de ${total} procesados · ${pct.toFixed(0)}%`;
+
+  if(q.cancelled){
+    $("top500QueueTime").textContent="Cancelado";
+  }else if(q.paused){
+    $("top500QueueTime").textContent="Pausado";
+  }else if(q.waiting){
+    // La cuenta regresiva la actualiza top500WaitSeconds().
+  }else if(q.running){
+    const remaining=Math.max(0,total-done);
+    const seconds=Math.ceil(remaining*q.intervalSeconds);
+    const mins=Math.ceil(seconds/60);
+    $("top500QueueTime").textContent=
+      `${q.currentSymbol?`Procesando ${q.currentSymbol} · `:""}≈ ${mins} min restantes`;
+  }else{
+    $("top500QueueTime").textContent="Terminado";
+  }
+}
+
+
+function top500Delay(ms){
+  return new Promise(resolve=>setTimeout(resolve,ms));
+}
+
+async function top500WaitSeconds(seconds,label="Esperando"){
+  top500QueueState.waiting=true;
+  let remaining=Math.max(1,Math.ceil(seconds));
+
+  while(remaining>0 && !top500QueueState.cancelled){
+    while(top500QueueState.paused && !top500QueueState.cancelled){
+      $("top500QueueTime").textContent="Pausado";
+      await top500Delay(500);
+    }
+    if(top500QueueState.cancelled)break;
+
+    $("top500QueueTime").textContent=`${label}: ${remaining} s`;
+    await top500Delay(1000);
+    remaining--;
+  }
+
+  top500QueueState.waiting=false;
+  top500QueueUI();
+}
+
+function top500SecondsToNextMinute(){
+  const now=new Date();
+  return Math.max(3,60-now.getSeconds()+3);
+}
+
+async function top500FetchSeriesOne(symbol,key,start,end){
+  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&start_date=${start}&end_date=${end}&order=asc&apikey=${encodeURIComponent(key)}`;
+  const res=await fetch(url);
+
+  let payload={};
+  try{payload=await res.json();}catch(e){}
+
+  if(res.status===429 || Number(payload?.code)===429){
+    const err=new Error(payload?.message||"Twelve Data alcanzó el límite de solicitudes.");
+    err.rateLimited=true;
+    throw err;
+  }
+
+  if(!res.ok || payload?.status==="error"){
+    const err=new Error(payload?.message||`Twelve Data respondió ${res.status}.`);
+    err.rateLimited=/credit|limit|too many|429/i.test(err.message);
+    throw err;
+  }
+
+  return payload;
 }
 
 async function top500Analyze(){
   if(top500QueueState.running)return;
-  const key=$("marketKey").value.trim();if(!key){top500Status("Primero guarda tu clave de Twelve Data en Configuración.","error");showTab("settings");return;}
-  const d=top500Load();if(!d.universe.length){top500Status("Primero pulsa “Cargar universo”.","error");return;}
+
+  const key=$("marketKey").value.trim();
+  if(!key){
+    top500Status("Primero guarda tu clave de Twelve Data en Configuración.","error");
+    showTab("settings");
+    return;
+  }
+
+  const d=top500Load();
+  if(!d.universe.length){
+    top500Status("Primero pulsa “Cargar universo”.","error");
+    return;
+  }
+
   const today=top500DayKey();
   const pending=d.universe.filter(x=>d.metrics?.[x.symbol]?.checkedDay!==today);
-  if(!pending.length){top500Status("Las empresas del universo ya están analizadas para hoy.","ok");renderTop500();return;}
-  Object.assign(top500QueueState,{running:true,paused:false,cancelled:false,total:pending.length,processed:0});top500QueueUI();
+
+  if(!pending.length){
+    top500Status("Las empresas del universo ya están analizadas para hoy.","ok");
+    renderTop500();
+    return;
+  }
+
+  Object.assign(top500QueueState,{
+    running:true,
+    paused:false,
+    cancelled:false,
+    total:pending.length,
+    processed:0,
+    waiting:false,
+    currentSymbol:"",
+    consecutive429:0
+  });
+
+  top500QueueUI();
   $("top500Analyze").disabled=true;
-  top500Status(`Analizando ${pending.length} empresas pendientes. El progreso se guarda después de cada bloque…`);
-  const end=today,start=shiftDay(end,-1830);
+  $("top500Pause").textContent="Pausar";
+
+  top500Status(
+    `Analizando ${pending.length} empresas una por una. `+
+    `Se respeta el límite gratuito y el avance se guarda después de cada empresa.`
+  );
+
+  const end=today;
+  const startDate=shiftDay(end,-1830);
+
   try{
-    for(let i=0;i<pending.length;i+=top500QueueState.batchSize){
+    for(let i=0;i<pending.length;i++){
       if(top500QueueState.cancelled)break;
-      while(top500QueueState.paused && !top500QueueState.cancelled)await new Promise(r=>setTimeout(r,800));
+
+      while(top500QueueState.paused && !top500QueueState.cancelled){
+        $("top500QueueTime").textContent="Pausado";
+        await top500Delay(500);
+      }
       if(top500QueueState.cancelled)break;
-      const batch=pending.slice(i,i+top500QueueState.batchSize),symbols=batch.map(x=>x.symbol);
-      let completed=false;
-      while(!completed && !top500QueueState.cancelled){
+
+      const row=pending[i];
+      top500QueueState.currentSymbol=row.symbol;
+      top500QueueUI();
+
+      let finished=false;
+
+      while(!finished && !top500QueueState.cancelled){
         try{
-          const res=await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbols.join(","))}&interval=1day&start_date=${start}&end_date=${end}&order=asc&apikey=${encodeURIComponent(key)}`);
-          const payload=await res.json();
-          if(!res.ok||payload?.status==="error")throw new Error(payload?.message||"Bloque rechazado.");
-          const normalized=top500NormalizeSeries(payload,symbols);
-          batch.forEach(row=>{
-            const item=normalized[row.symbol];
-            const metric=item&&!item.code&&!item.status?top500MetricsFromSeries(item.values||[]):null;
-            d.metrics[row.symbol]=metric?{...metric,checkedDay:today}:{checkedDay:today,error:true};
-          });
-          completed=true;
+          top500Status(
+            `Consultando ${row.symbol} · ${top500QueueState.processed}/${pending.length} completadas…`
+          );
+
+          const payload=await top500FetchSeriesOne(
+            row.symbol,key,startDate,end
+          );
+
+          const metric=top500MetricsFromSeries(payload?.values||[]);
+
+          d.metrics[row.symbol]=metric
+            ? {...metric,checkedDay:today}
+            : {checkedDay:today,error:true,message:"Sin histórico utilizable"};
+
+          top500QueueState.consecutive429=0;
+          finished=true;
+
         }catch(err){
-          if(/credit|limit|429/i.test(String(err.message))){top500Status("Límite por minuto alcanzado. Esperando automáticamente para continuar…");await waitForNextMinute();}
-          else{
-            batch.forEach(row=>d.metrics[row.symbol]={checkedDay:today,error:true,message:String(err.message)});
-            completed=true;
+          if(err?.rateLimited){
+            top500QueueState.consecutive429++;
+
+            // Si el límite sigue bloqueando varios minutos seguidos,
+            // detener de forma segura en vez de golpear la API sin parar.
+            if(top500QueueState.consecutive429>=3){
+              top500Status(
+                "Twelve Data sigue rechazando solicitudes después de varios reintentos. "+
+                "El progreso quedó guardado. Espera unos minutos y pulsa Analizar rendimientos para continuar.",
+                "warn"
+              );
+              top500QueueState.paused=true;
+              top500QueueState.running=false;
+              return;
+            }
+
+            const wait=top500SecondsToNextMinute();
+            top500Status(
+              `Límite de Twelve Data alcanzado. No se harán más solicitudes hasta la siguiente ventana (${wait} s).`
+            );
+            await top500WaitSeconds(wait,"Reintentando al liberar el límite");
+            continue;
           }
+
+          // Error propio de ese símbolo: se registra y se continúa.
+          d.metrics[row.symbol]={
+            checkedDay:today,
+            error:true,
+            message:String(err.message||err)
+          };
+          finished=true;
         }
       }
-      d.lastAnalysis=new Date().toISOString();top500Save(d);
-      top500QueueState.processed=Math.min(i+batch.length,pending.length);top500QueueUI();renderTop500();
-      if(i+top500QueueState.batchSize<pending.length && !top500QueueState.cancelled){$("top500QueueTime").textContent="Esperando siguiente bloque…";await waitForNextMinute();}
+
+      if(top500QueueState.cancelled)break;
+
+      d.lastAnalysis=new Date().toISOString();
+      top500Save(d);
+
+      top500QueueState.processed=i+1;
+      top500QueueUI();
+      renderTop500();
+
+      // Máximo aproximado: 7 solicitudes/minuto.
+      // Dejamos margen respecto a las 8/min del plan gratuito.
+      if(i<pending.length-1 && !top500QueueState.cancelled){
+        await top500WaitSeconds(
+          top500QueueState.intervalSeconds,
+          "Siguiente empresa"
+        );
+      }
     }
-    if(top500QueueState.cancelled)top500Status("Análisis detenido. Lo ya calculado quedó guardado; puedes continuar después.");
-    else top500Status("Análisis terminado. Ya puedes ordenar por hoy, semana, mes, año o ~5 años.","ok");
+
+    if(top500QueueState.cancelled){
+      top500Status(
+        "Análisis detenido. Todo lo ya procesado quedó guardado; puedes continuar después."
+      );
+    }else{
+      top500Status(
+        "Análisis terminado. Ya puedes ordenar por hoy, semana, mes, año o ~5 años y generar el Top 20.",
+        "ok"
+      );
+    }
+
   }finally{
-    top500QueueState.running=false;top500QueueUI();$("top500Analyze").disabled=false;renderTop500();
+    top500QueueState.running=false;
+    top500QueueState.waiting=false;
+    top500QueueState.currentSymbol="";
+    top500QueueUI();
+    $("top500Analyze").disabled=false;
+    renderTop500();
   }
 }
 
@@ -5891,7 +6078,7 @@ async function v33SaveOptIn(){
 async function v33GenerateTop20(){
   if(!v27IsAdmin())throw new Error("Solo Admin puede generar el Top 20.");
 
-  const d=top500State?.data||{};
+  const d=top500Load();
   const universe=Array.isArray(d.universe)?d.universe:[];
   const metrics=d.metrics||{};
 
@@ -5901,9 +6088,9 @@ async function v33GenerateTop20(){
       symbol:a.symbol,
       name:a.name||a.symbol,
       exchange:a.exchange||"",
-      price:Number(m.price)||null,
+      price:Number.isFinite(Number(m.price))?Number(m.price):null,
       daily:Number(m.today),
-      inCatalog:!!assets.find(x=>x.symbol===a.symbol)
+      inCatalog:assets.some(x=>x.symbol===a.symbol)
     };
   })
   .filter(x=>Number.isFinite(x.daily))
@@ -5911,50 +6098,52 @@ async function v33GenerateTop20(){
   .slice(0,20);
 
   if(!ranked.length){
-    throw new Error("Todavía no hay datos suficientes del Top 500. Primero carga y analiza el universo.");
+    throw new Error(
+      "Todavía no hay empresas analizadas con rendimiento diario. "+
+      "Primero termina al menos parte del análisis Top 500."
+    );
   }
 
-  const today=new Date().toISOString().slice(0,10);
-  const rows=ranked.map((x,i)=>({
+  const marketDate=top500DayKey();
+  const items=ranked.map((x,i)=>({
     rank:i+1,
     symbol:x.symbol,
     name:x.name,
     price:x.price,
     daily_change_pct:x.daily,
-    in_catalog:x.inCatalog,
-    trading_day:today,
-    generated_at:new Date().toISOString()
+    daily_percent:x.daily,
+    in_catalog:x.inCatalog
   }));
 
-  // Guardar el resumen diario en Supabase si la tabla está disponible.
-  try{
-    await v24Supabase.from("daily_top20").delete().eq("trading_day",today);
-    const {error}=await v24Supabase.from("daily_top20").insert(rows);
-    if(error)throw error;
-  }catch(e){
-    console.warn("No se pudo guardar daily_top20:",e);
-  }
+  // daily_top20 guarda UN registro por fecha y los 20 activos dentro de items JSON.
+  const {data:{session}}=await v24Supabase.auth.getSession();
+  const {error}=await v24Supabase
+    .from("daily_top20")
+    .upsert({
+      market_date:marketDate,
+      items,
+      generated_by:session?.user?.id||null,
+      created_at:new Date().toISOString()
+    },{onConflict:"market_date"});
 
-  window.v33LastTop20=rows;
-  const body=document.getElementById("v33Top20Body");
-  if(body){
-    body.innerHTML=rows.map(r=>`<tr>
-      <td>${r.rank}</td>
-      <td>${r.name}</td>
-      <td>${r.symbol}</td>
-      <td>${r.in_catalog?"✓ Sí":"No"}</td>
-      <td class="${r.daily_change_pct>=0?"positive":"negative"}">${r.daily_change_pct>=0?"+":""}${r.daily_change_pct.toFixed(2)}%</td>
-      <td>${r.price?usd(r.price):"—"}</td>
-    </tr>`).join("");
-  }
-  const count=document.getElementById("v33LastTop20");
-  if(count)count.textContent=rows.length;
+  if(error)throw error;
+
+  v33Top20Cache=items;
+  window.v33LastTop20=items;
+  v33RenderTop20(items);
+
+  const last=document.getElementById("v33LastTop20");
+  if(last)last.textContent=marketDate;
+
   const status=document.getElementById("v33MailStatus");
   if(status){
-    status.textContent=`Top 20 generado desde el universo Top 500 (${universe.length} empresas cargadas).`;
+    status.textContent=
+      `Top 20 guardado correctamente desde ${universe.length} empresas del universo; `+
+      `${ranked.length} con datos diarios entraron al ranking.`;
     status.className="status ok";
   }
-  return rows;
+
+  return items;
 }
 function v33RenderTop20(items){const tb=document.getElementById("v33Top20Body");if(!tb)return;tb.innerHTML=(items||[]).map(x=>`<tr><td><b>#${x.rank}</b></td><td>${x.name||"—"}</td><td>${x.symbol}</td><td>${v33FmtUSD(x.price)}</td><td class="${Number(x.daily_percent)>=0?'positive':'negative'}">${v33FmtPct(x.daily_percent)}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">Sin datos.</td></tr>'}
 
