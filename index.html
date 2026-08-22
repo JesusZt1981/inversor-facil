@@ -649,6 +649,15 @@ body.v34-admin-confirmed #v27AdminButton{display:inline-flex!important}
   #v34EffectsBtn{font-size:10px}
 }
 
+
+/* ===== V35 · Top 20 independiente del catálogo ===== */
+.v35-top20-note{
+  margin:8px 0 10px;padding:9px 11px;border-radius:10px;
+  background:rgba(24,53,76,.74);border:1px solid #3d688a;
+  color:#c7d9ea;font-size:11px;line-height:1.4
+}
+.v35-top20-note b{color:#69c8ff}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -831,7 +840,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V34</h1>
+    <h1>Inversor Fácil V35</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -962,7 +971,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
             <button id="v33ResendTop20" class="secondary">Reenviar último Top 20</button>
           </div>
           <div id="v33MailStatus" class="status">La interfaz y Supabase quedan preparados. El envío real requiere conectar una vez el backend de Gmail en Render.</div>
-          <div class="table-wrap v33-top20-wrap"><table><thead><tr><th>#</th><th>Empresa</th><th>Símbolo</th><th>Precio</th><th>Día</th></tr></thead><tbody id="v33Top20Body"><tr><td colspan="5" class="empty">Aún no hay Top 20 generado.</td></tr></tbody></table></div>
+          <div class="table-wrap v33-top20-wrap"><table><thead><tr><th>#</th><th>Empresa</th><th>Símbolo</th><th>Precio</th><th>Día</th></tr></thead><tbody id="v33Top20Body"><tr><td colspan="5" class="empty">Aún no hay Top 20 generado desde el Top 500.</td></tr></tbody></table></div>
         </div>
 
       </div>
@@ -1408,7 +1417,12 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
       <div class="metric"><span>Mejor de ~5 años</span><strong id="top500BestYear">—</strong></div>
     </div>
 
-    <div id="v34Top500RoleStatus" class="v34-role-status">Comprobando permisos de administrador…</div>
+    
+<div class="v35-top20-note">
+  <b>Top 20 por correo:</b> se toma de este universo Top 500 analizado, aunque una empresa todavía no esté agregada al catálogo principal.
+</div>
+
+<div id="v34Top500RoleStatus" class="v34-role-status">Comprobando permisos de administrador…</div>
     <div id="top500Status" class="status">Primero carga el universo. La clave de Twelve Data configurada en la app se reutiliza aquí.</div>
     <div id="top500Queue" class="queue-progress hidden">
       <div class="queue-track"><div id="top500QueueFill" class="queue-fill" style="width:0%"></div></div>
@@ -5876,12 +5890,71 @@ async function v33SaveOptIn(){
 
 async function v33GenerateTop20(){
   if(!v27IsAdmin())throw new Error("Solo Admin puede generar el Top 20.");
-  const {data,error}=await v24Supabase.from("shared_catalog").select("symbol,name,price,daily_percent,market_date,updated_at").not("daily_percent","is",null).order("daily_percent",{ascending:false}).limit(20);
-  if(error)throw error;if(!data?.length)throw new Error("No hay rendimientos diarios publicados todavía. Primero usa Actualizar todo + publicar.");
-  const items=data.map((x,i)=>({rank:i+1,...x}));
-  const marketDate=items.find(x=>x.market_date)?.market_date || new Date().toISOString().slice(0,10);
-  const {error:saveErr}=await v24Supabase.from("daily_top20").upsert({market_date:marketDate,items,generated_by:(await v24Supabase.auth.getUser()).data.user?.id},{onConflict:"market_date"});
-  if(saveErr)throw saveErr;v33Top20Cache=items;v33RenderTop20(items);await v33RefreshNotificationState();return {marketDate,items};
+
+  const d=top500State?.data||{};
+  const universe=Array.isArray(d.universe)?d.universe:[];
+  const metrics=d.metrics||{};
+
+  const ranked=universe.map(a=>{
+    const m=metrics[a.symbol]||{};
+    return {
+      symbol:a.symbol,
+      name:a.name||a.symbol,
+      exchange:a.exchange||"",
+      price:Number(m.price)||null,
+      daily:Number(m.today),
+      inCatalog:!!assets.find(x=>x.symbol===a.symbol)
+    };
+  })
+  .filter(x=>Number.isFinite(x.daily))
+  .sort((a,b)=>b.daily-a.daily)
+  .slice(0,20);
+
+  if(!ranked.length){
+    throw new Error("Todavía no hay datos suficientes del Top 500. Primero carga y analiza el universo.");
+  }
+
+  const today=new Date().toISOString().slice(0,10);
+  const rows=ranked.map((x,i)=>({
+    rank:i+1,
+    symbol:x.symbol,
+    name:x.name,
+    price:x.price,
+    daily_change_pct:x.daily,
+    in_catalog:x.inCatalog,
+    trading_day:today,
+    generated_at:new Date().toISOString()
+  }));
+
+  // Guardar el resumen diario en Supabase si la tabla está disponible.
+  try{
+    await v24Supabase.from("daily_top20").delete().eq("trading_day",today);
+    const {error}=await v24Supabase.from("daily_top20").insert(rows);
+    if(error)throw error;
+  }catch(e){
+    console.warn("No se pudo guardar daily_top20:",e);
+  }
+
+  window.v33LastTop20=rows;
+  const body=document.getElementById("v33Top20Body");
+  if(body){
+    body.innerHTML=rows.map(r=>`<tr>
+      <td>${r.rank}</td>
+      <td>${r.name}</td>
+      <td>${r.symbol}</td>
+      <td>${r.in_catalog?"✓ Sí":"No"}</td>
+      <td class="${r.daily_change_pct>=0?"positive":"negative"}">${r.daily_change_pct>=0?"+":""}${r.daily_change_pct.toFixed(2)}%</td>
+      <td>${r.price?usd(r.price):"—"}</td>
+    </tr>`).join("");
+  }
+  const count=document.getElementById("v33LastTop20");
+  if(count)count.textContent=rows.length;
+  const status=document.getElementById("v33MailStatus");
+  if(status){
+    status.textContent=`Top 20 generado desde el universo Top 500 (${universe.length} empresas cargadas).`;
+    status.className="status ok";
+  }
+  return rows;
 }
 function v33RenderTop20(items){const tb=document.getElementById("v33Top20Body");if(!tb)return;tb.innerHTML=(items||[]).map(x=>`<tr><td><b>#${x.rank}</b></td><td>${x.name||"—"}</td><td>${x.symbol}</td><td>${v33FmtUSD(x.price)}</td><td class="${Number(x.daily_percent)>=0?'positive':'negative'}">${v33FmtPct(x.daily_percent)}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">Sin datos.</td></tr>'}
 
