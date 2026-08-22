@@ -618,6 +618,37 @@ body.v30-user #v33Top500Toolbar{display:none!important}
 #v33Top500Load,#v33Top500Analyze,#v33Top500Open{min-height:40px}
 @media(max-width:800px){.v33-test-row{grid-template-columns:1fr}.v33-test-row button{width:100%}}
 
+
+/* ===== V34 · Rol Admin visible + efectos de operación ===== */
+.v34-admin-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.08em;
+  color:#e9fbff;background:linear-gradient(135deg,#1176b8,#6b4fd0);
+  border:1px solid #6fc7ff;box-shadow:0 0 18px rgba(66,169,255,.18)
+}
+.v34-admin-badge.hidden{display:none!important}
+#v34EffectsBtn{
+  background:linear-gradient(145deg,#25303d,#1c2430)!important;
+  border:1px solid #4d6178!important;color:#e9f3ff!important
+}
+#v34EffectsBtn[data-on="true"]{
+  background:linear-gradient(135deg,#1c765d,#206a9d)!important;
+  border-color:#58c9ac!important
+}
+.v34-role-status{
+  margin:7px 0 10px;padding:8px 10px;border-radius:9px;
+  background:rgba(30,43,59,.78);border:1px solid #405874;color:#b9c8d9;font-size:11px
+}
+.v34-role-status.ok{border-color:#347f69;color:#6fe4bc;background:rgba(22,67,55,.34)}
+.v34-role-status.error{border-color:#9b3e52;color:#ff8294;background:rgba(96,25,39,.28)}
+body.v34-admin-confirmed #v33Top500Toolbar{display:grid!important}
+body.v34-admin-confirmed #v27AdminButton{display:inline-flex!important}
+@media(max-width:650px){
+  #v24UserBar{grid-template-columns:1fr auto auto!important}
+  #v34AdminBadge{font-size:9px;padding:4px 7px}
+  #v34EffectsBtn{font-size:10px}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -756,6 +787,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <div id="v24UserBar" class="hidden">
   <span id="v24UserEmail" class="user-pill">—</span>
+  <span id="v34AdminBadge" class="v34-admin-badge hidden">ADMIN</span>
   <button id="v25SoundBtn" class="small" type="button" data-on="false" aria-pressed="false"><span id="v25SoundPulse"></span><span id="v25SoundLabel">Música focus: apagada</span></button>
   <button id="v28DeleteMeBtn" class="danger small" type="button">Eliminar mi cuenta</button>
   <button id="v24LogoutBtn" class="secondary small" type="button">Cerrar sesión</button>
@@ -799,7 +831,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V33</h1>
+    <h1>Inversor Fácil V34</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -1376,6 +1408,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
       <div class="metric"><span>Mejor de ~5 años</span><strong id="top500BestYear">—</strong></div>
     </div>
 
+    <div id="v34Top500RoleStatus" class="v34-role-status">Comprobando permisos de administrador…</div>
     <div id="top500Status" class="status">Primero carga el universo. La clave de Twelve Data configurada en la app se reutiliza aquí.</div>
     <div id="top500Queue" class="queue-progress hidden">
       <div class="queue-track"><div id="top500QueueFill" class="queue-fill" style="width:0%"></div></div>
@@ -2402,6 +2435,7 @@ async function addAssetDialog(symbol,isAdditional=false){
 
   const invested=shares*a.price*fx;
   state.portfolio.push({id:uid(),symbol:a.symbol,shares,invested,years});
+  try{window.v34MoneySound?.()}catch(e){}
   render();
   renderExplore();
 
@@ -5581,12 +5615,39 @@ document.getElementById("v28DeleteMeBtn")?.addEventListener("click",async()=>{
 });
 
 let v27Profile=null;
-function v27IsAdmin(){return v27Profile?.role==="admin";}
+const V34_PILOT_ADMIN_EMAIL="jzutenorio@gmail.com";
+function v27IsAdmin(){
+  const profileAdmin=String(v27Profile?.role||"").toLowerCase()==="admin";
+  const emailAdmin=String(v27Profile?.email||"").toLowerCase()===V34_PILOT_ADMIN_EMAIL;
+  return profileAdmin || emailAdmin;
+}
 async function v27LoadProfile(user){
   if(!user)return null;
+  const roleStatus=document.getElementById("v34Top500RoleStatus");
   const {data,error}=await v24Supabase.from("profiles").select("id,email,role,created_at,last_seen").eq("id",user.id).maybeSingle();
-  if(!error&&data)v27Profile=data;
-  document.getElementById("v27AdminButton")?.classList.toggle("hidden",!v27IsAdmin());
+
+  if(!error&&data){
+    v27Profile=data;
+  }else{
+    // Fallback seguro para el piloto: solo reconoce el correo Admin ya confirmado en Supabase.
+    v27Profile={id:user.id,email:user.email||"",role:String(user.email||"").toLowerCase()===V34_PILOT_ADMIN_EMAIL?"admin":"user"};
+  }
+
+  const admin=v27IsAdmin();
+  document.body.classList.toggle("v34-admin-confirmed",admin);
+  document.getElementById("v27AdminButton")?.classList.toggle("hidden",!admin);
+  document.getElementById("v34AdminBadge")?.classList.toggle("hidden",!admin);
+
+  if(roleStatus){
+    roleStatus.textContent=admin
+      ? `Permisos confirmados: ADMIN · ${v27Profile.email||user.email||""}`
+      : `Sesión de usuario · ${v27Profile.email||user.email||""}`;
+    roleStatus.className=`v34-role-status ${admin?"ok":""}`;
+  }
+
+  const toolbar=document.getElementById("v33Top500Toolbar");
+  if(toolbar)toolbar.style.setProperty("display",admin?"grid":"none","important");
+
   if(typeof window.v30ApplyPermissions==="function") window.v30ApplyPermissions();
   return v27Profile;
 }
@@ -5838,12 +5899,111 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("v33SendTest")?.addEventListener("click",async()=>{const st=document.getElementById("v33MailStatus"),email=document.getElementById("v33TestEmail").value.trim();try{if(!email)throw new Error("Escribe el correo de prueba.");st.textContent="Enviando prueba…";await v33Mail("/top20/test",{email});st.textContent=`Prueba enviada a ${email}.`;st.className="status ok"}catch(e){st.textContent=e.message;st.className="status error"}});
   document.getElementById("v33ResendTop20")?.addEventListener("click",async()=>{const st=document.getElementById("v33MailStatus");try{st.textContent="Reenviando último Top 20…";await v33Mail("/top20/resend",{});st.textContent="Reenvío solicitado.";st.className="status ok"}catch(e){st.textContent=e.message;st.className="status error"}});
 
-  document.getElementById("v33Top500Load")?.addEventListener("click",()=>{if(!v27IsAdmin())return;const target=document.getElementById("top500Target");if(target)target.value="500";document.getElementById("top500LoadUniverse")?.click();v33AdminTop500Status("Cargando universo de 500 empresas…")});
-  document.getElementById("v33Top500Analyze")?.addEventListener("click",()=>{if(!v27IsAdmin())return;document.getElementById("top500Analyze")?.click();v33AdminTop500Status("Analizando rendimientos e historial de hasta 5 años…")});
+  document.getElementById("v33Top500Load")?.addEventListener("click",()=>{
+  if(!v27IsAdmin()){v33AdminTop500Status("No se reconocieron permisos Admin.","error");return;}
+  const target=document.getElementById("top500Target");if(target)target.value="500";
+  const real=document.getElementById("top500LoadUniverse");
+  if(!real){v33AdminTop500Status("No se encontró el control Top 500.","error");return;}
+  real.click();v33AdminTop500Status("Cargando universo de 500 empresas…");
+});
+  document.getElementById("v33Top500Analyze")?.addEventListener("click",()=>{
+  if(!v27IsAdmin()){v33AdminTop500Status("No se reconocieron permisos Admin.","error");return;}
+  const real=document.getElementById("top500Analyze");
+  if(!real){v33AdminTop500Status("No se encontró el botón de análisis Top 500.","error");return;}
+  real.click();v33AdminTop500Status("Analizando rendimientos e historial de hasta 5 años…");
+});
   document.getElementById("v33Top500Open")?.addEventListener("click",()=>{showTab("top500");setTimeout(()=>document.getElementById("v33Top500Toolbar")?.scrollIntoView({behavior:"smooth",block:"center"}),150)});
 
   setTimeout(()=>{v33RefreshNotificationState();if(v27IsAdmin()){document.getElementById("v33Top500Toolbar")?.style.setProperty("display","grid","important")}},1200);
 });
+</script>
+
+
+<script>
+/* ===== V34 · Efectos de inversión originales (Web Audio) ===== */
+(function(){
+  const KEY="inversorFacilEffectsV34";
+  let enabled=localStorage.getItem(KEY)!=="off";
+  let ctx=null;
+
+  function audioCtx(){
+    if(!ctx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC)return null;
+      ctx=new AC();
+    }
+    if(ctx.state==="suspended")ctx.resume().catch(()=>{});
+    return ctx;
+  }
+
+  function tone(freq,start,duration,volume,type="sine"){
+    const c=audioCtx();if(!c||!enabled)return;
+    const o=c.createOscillator(),g=c.createGain();
+    o.type=type;o.frequency.setValueAtTime(freq,c.currentTime+start);
+    g.gain.setValueAtTime(0.0001,c.currentTime+start);
+    g.gain.exponentialRampToValueAtTime(Math.max(.001,volume),c.currentTime+start+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+start+duration);
+    o.connect(g);g.connect(c.destination);
+    o.start(c.currentTime+start);o.stop(c.currentTime+start+duration+.02);
+  }
+
+  function softClick(){
+    if(!enabled)return;
+    tone(520,0,.055,.025,"triangle");
+    tone(690,.035,.07,.018,"sine");
+  }
+
+  function moneySuccess(){
+    if(!enabled)return;
+    // Pequeña secuencia ascendente tipo monedas/caja, sin sonido de casino.
+    tone(740,0,.11,.035,"triangle");
+    tone(990,.075,.13,.032,"triangle");
+    tone(1320,.155,.16,.028,"sine");
+    tone(1760,.225,.11,.018,"sine");
+  }
+
+  window.v34MoneySound=moneySuccess;
+  window.v34SoftOperationSound=softClick;
+
+  const btn=document.getElementById("v34EffectsBtn");
+  function paint(){
+    if(!btn)return;
+    btn.dataset.on=enabled?"true":"false";
+    btn.setAttribute("aria-pressed",enabled?"true":"false");
+    btn.textContent=enabled?"💰 Efectos: encendidos":"🔇 Efectos: apagados";
+  }
+  paint();
+  btn?.addEventListener("click",()=>{
+    enabled=!enabled;localStorage.setItem(KEY,enabled?"on":"off");paint();
+    if(enabled)softClick();
+  });
+
+  // Sonido suave cuando se inicia la intención de simular/invertir.
+  document.addEventListener("click",e=>{
+    const b=e.target.closest(".addAsset,.addMore,[data-action='simulate'],.simulate");
+    if(b)softClick();
+  },true);
+})();
+</script>
+
+
+<script>
+(function(){
+  async function v34RecheckAdmin(){
+    try{
+      const {data}=await v24Supabase.auth.getSession();
+      if(data?.session?.user)await v27LoadProfile(data.session.user);
+    }catch(e){
+      const el=document.getElementById("v34Top500RoleStatus");
+      if(el){el.textContent="No se pudo comprobar el rol. Recarga la página.";el.className="v34-role-status error";}
+    }
+  }
+  document.addEventListener("DOMContentLoaded",()=>{
+    setTimeout(v34RecheckAdmin,350);
+    setTimeout(v34RecheckAdmin,1500);
+  });
+  window.addEventListener("focus",v34RecheckAdmin);
+})();
 </script>
 
 </body>
