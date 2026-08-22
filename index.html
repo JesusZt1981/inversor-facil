@@ -840,7 +840,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V38</h1>
+    <h1>Inversor Fácil V39</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -1384,14 +1384,14 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
     <div class="top500-note">
       <b>Qué hace:</b> descarga acciones desde Twelve Data, prioriza NASDAQ, NYSE y AMEX de forma determinista (no aleatoria), conserva hasta 500 símbolos y analiza hasta 5 años de cierres históricos. <b>Importante:</b> “Top 500” significa el universo analizado; no afirma que sean las 500 mayores por capitalización. 
-      Para probar el correo puedes empezar con solo 20 empresas. Después puedes ampliar a 100, 200, 300, 400 o 500. Con el plan gratuito de Twelve Data el análisis grande tarda más; el avance se guarda para continuar después.
+      Para probar el correo empieza con 20 empresas. El análisis usa un modo seguro para Twelve Data Free: espera una ventana inicial y después consulta aproximadamente 5 empresas por minuto para evitar bloqueos 429. Luego puedes ampliar a 100, 200, 300, 400 o 500.
     </div>
 
     <div id="v33Top500Toolbar" class="top500-toolbar v30-admin-only">
       <div>
         <label for="top500Target">Tamaño del universo</label>
         <select id="top500Target">
-          <option value="20" selected>20 empresas · prueba rápida</option>
+          <option value="20" selected>20 empresas · prueba correo</option>
           <option value="100">100 empresas</option>
           <option value="200">200 empresas</option>
           <option value="300">300 empresas</option>
@@ -1422,7 +1422,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
     
 <div class="v35-top20-note">
-  <b>Top 20 por correo:</b> para la prueba puedes analizar 20 empresas y generar el correo inmediatamente. Después, al ampliar el universo, el Top 20 se recalcula con todas las empresas analizadas.
+  <b>Top 20 por correo:</b> con 20 empresas la prueba tardará aproximadamente 4–6 minutos incluyendo la espera inicial de seguridad. Después, al ampliar el universo, el Top 20 se recalcula con todas las empresas analizadas.
 </div>
 
 <div id="v34Top500RoleStatus" class="v34-role-status">Comprobando permisos de administrador…</div>
@@ -5405,10 +5405,11 @@ const top500QueueState={
   cancelled:false,
   total:0,
   processed:0,
-  intervalSeconds:8.5,
+  intervalSeconds:12,
   waiting:false,
   currentSymbol:"",
-  consecutive429:0
+  consecutive429:0,
+  initialCooldownDone:false
 };
 
 function top500Load(){
@@ -5541,8 +5542,9 @@ async function top500WaitSeconds(seconds,label="Esperando"){
 }
 
 function top500SecondsToNextMinute(){
-  const now=new Date();
-  return Math.max(3,60-now.getSeconds()+3);
+  // Twelve Data Free: dejamos una ventana completa y margen extra.
+  // Esto evita reintentar dentro del mismo bloque de rate-limit.
+  return 70;
 }
 
 async function top500FetchSeriesOne(symbol,key,start,end){
@@ -5608,9 +5610,20 @@ async function top500Analyze(){
   $("top500Pause").textContent="Pausar";
 
   top500Status(
-    `Analizando ${pending.length} empresas una por una. `+
-    `Se respeta el límite gratuito y el avance se guarda después de cada empresa.`
+    `Preparando análisis de ${pending.length} empresas. `+
+    `Para evitar el error 429 del plan gratuito, primero liberaremos una ventana completa de Twelve Data.`
   );
+
+  // IMPORTANTE:
+  // al cargar universo u otros módulos pueden haberse consumido créditos.
+  // Esperamos una ventana completa antes de lanzar la primera serie histórica.
+  if(!top500QueueState.initialCooldownDone){
+    await top500WaitSeconds(
+      70,
+      "Preparando Twelve Data · inicio seguro"
+    );
+    top500QueueState.initialCooldownDone=true;
+  }
 
   const end=today;
   const startDate=shiftDay(end,-1830);
@@ -5656,9 +5669,9 @@ async function top500Analyze(){
 
             // Si el límite sigue bloqueando varios minutos seguidos,
             // detener de forma segura en vez de golpear la API sin parar.
-            if(top500QueueState.consecutive429>=3){
+            if(top500QueueState.consecutive429>=5){
               top500Status(
-                "Twelve Data sigue rechazando solicitudes después de varios reintentos. "+
+                "Twelve Data sigue rechazando solicitudes después de varias ventanas completas. "+
                 "El progreso quedó guardado. Espera unos minutos y pulsa Analizar rendimientos para continuar.",
                 "warn"
               );
@@ -5669,7 +5682,7 @@ async function top500Analyze(){
 
             const wait=top500SecondsToNextMinute();
             top500Status(
-              `Límite de Twelve Data alcanzado. No se harán más solicitudes hasta la siguiente ventana (${wait} s).`
+              `Twelve Data alcanzó su límite gratuito. Se detienen TODAS las solicitudes y se reintentará en ${wait} s.`
             );
             await top500WaitSeconds(wait,"Reintentando al liberar el límite");
             continue;
@@ -5694,8 +5707,8 @@ async function top500Analyze(){
       top500QueueUI();
       renderTop500();
 
-      // Máximo aproximado: 7 solicitudes/minuto.
-      // Dejamos margen respecto a las 8/min del plan gratuito.
+      // Ritmo seguro para Twelve Data Free: 1 solicitud cada 12 s (~5/min).
+      // Dejamos margen para otras consultas de la aplicación.
       if(i<pending.length-1 && !top500QueueState.cancelled){
         await top500WaitSeconds(
           top500QueueState.intervalSeconds,
