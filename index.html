@@ -880,7 +880,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V42</h1>
+    <h1>Inversor Fácil V43</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -1463,8 +1463,8 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
   <div class="card">
     <div class="section-head">
       <div>
-        <h2>Top 500 · Ranking de rendimiento hasta 5 años</h2>
-        <p class="muted" style="margin:0">Construye un universo reproducible de hasta 500 acciones de EE. UU. y compáralas por rendimiento de hoy, semana, mes, año o aproximadamente 5 años.</p>
+        <h2>Top 500 · Ranking con datos guardados</h2>
+        <p class="muted" style="margin:0">Mientras Twelve Data no tenga créditos, este módulo usa exclusivamente datos ya guardados. No consume créditos. El histórico real se renovará desde el servidor cuando haya cuota disponible.</p>
       </div>
       <span class="badge">V21 · TOP 500</span>
     </div>
@@ -1497,7 +1497,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         </select>
       </div>
       <button id="top500LoadUniverse" class="secondary">1. Cargar universo</button>
-      <button id="top500Analyze" class="primary">2. Analizar rendimientos</button>
+      <button id="top500Analyze" class="primary">2. Clasificar datos guardados</button>
     </div>
 
     <div class="top500-summary">
@@ -6847,6 +6847,212 @@ document.addEventListener("DOMContentLoaded",()=>{
     setTimeout(placeCreditMini,1900);
   });
   addEventListener("resize",()=>setTimeout(placeCreditMini,50));
+})();
+</script>
+
+
+<script>
+/* ===== V43 · CERO consultas directas a Twelve Data para datos guardados ===== */
+(function(){
+  const MAILER_URL="https://inversor-facil-mailer.onrender.com";
+
+  async function headers(){
+    const {data,error}=await v24Supabase.auth.getSession();
+    if(error||!data?.session?.access_token)throw new Error("No hay sesión válida de Supabase.");
+    return {"Content-Type":"application/json","Authorization":"Bearer "+data.session.access_token};
+  }
+
+  async function syncSaved(){
+    await v27LoadSharedCatalog();
+    try{render()}catch(e){}
+    try{renderExplore()}catch(e){}
+    try{renderCompare()}catch(e){}
+    try{renderPortfolioVisuals()}catch(e){}
+    try{renderCatalogResults()}catch(e){}
+    try{captureMarketHistory()}catch(e){}
+  }
+
+  // Individual "Actualizar precio": ahora relee el precio GUARDADO.
+  window.updateSinglePrice=async function(symbol,includeHistory=false){
+    try{
+      const before=assets.find(a=>a.symbol===symbol);
+      await syncSaved();
+      const a=assets.find(x=>x.symbol===symbol);
+      if(!a)throw new Error("El activo no está en el catálogo guardado.");
+      showToast(`${a.name}: precio guardado ${usd(Number(a.price)||0)}. Twelve Data: 0 créditos.`,"ok");
+    }catch(e){
+      showToast(`No se pudo cargar el precio guardado: ${e.message}`,"error");
+    }
+  };
+
+  function replaceButton(id,handler,newText){
+    const old=document.getElementById(id);
+    if(!old)return;
+    const clone=old.cloneNode(true);
+    old.replaceWith(clone);
+    clone.id=id;
+    if(newText)clone.textContent=newText;
+    clone.addEventListener("click",()=>handler().catch(e=>{
+      showToast(e.message,"error");
+    }));
+  }
+
+  async function refreshSavedPortfolio(){
+    await syncSaved();
+    const st=document.getElementById("marketStatus");
+    if(st){
+      st.textContent="Cartera actualizada con precios guardados. Twelve Data: 0 créditos.";
+      st.className="status ok";
+    }
+    showToast("Cartera actualizada con precios guardados. 0 créditos.","ok");
+  }
+
+  async function refreshSavedCatalog(){
+    if(typeof v42RefreshEverythingSaved==="function"){
+      return v42RefreshEverythingSaved();
+    }
+    await syncSaved();
+    const n=await v27PublishCatalog();
+    showToast(`${n} activos sincronizados con precios guardados. 0 créditos.`,"ok");
+  }
+
+  function savedUniverse(target){
+    return assets
+      .filter(a=>a.type==="stock" && Number.isFinite(Number(a.price)) && Number(a.price)>0)
+      .slice()
+      .sort((a,b)=>String(a.symbol).localeCompare(String(b.symbol)))
+      .slice(0,target)
+      .map(a=>({
+        symbol:a.symbol,
+        name:a.name,
+        exchange:a.exchange||"",
+        type:"stock"
+      }));
+  }
+
+  async function loadTop500Saved(){
+    await syncSaved();
+    const d=top500Load();
+    const target=Number(document.getElementById("top500Target")?.value)||20;
+    d.target=target;
+    d.universe=savedUniverse(target);
+    d.metrics=d.metrics||{};
+
+    d.universe.forEach(row=>{
+      const a=assets.find(x=>x.symbol===row.symbol);
+      if(!a)return;
+      d.metrics[row.symbol]={
+        today:Number.isFinite(Number(a.dailyPercent))?Number(a.dailyPercent):0,
+        week:Number.isFinite(Number(a.weekPercent))?Number(a.weekPercent):null,
+        month:Number.isFinite(Number(a.monthPercent))?Number(a.monthPercent):null,
+        year:Number.isFinite(Number(a.yearPercent))?Number(a.yearPercent):null,
+        fiveYear:Number.isFinite(Number(a.fiveYearPercent))?Number(a.fiveYearPercent):null,
+        price:Number(a.price),
+        lastClose:Number(a.price),
+        checkedDay:new Date().toISOString().slice(0,10),
+        savedOnly:true
+      };
+    });
+
+    top500Save(d);
+    renderTop500();
+    top500Status(`Universo cargado con ${d.universe.length} empresas y precios guardados. Consumo: 0 créditos.`,"ok");
+  }
+
+  async function analyzeTop500Saved(){
+    await loadTop500Saved();
+    const d=top500Load();
+    const analyzed=d.universe.filter(x=>d.metrics?.[x.symbol]);
+    top500Status(
+      `Clasificación lista con ${analyzed.length} empresas usando únicamente datos guardados. Twelve Data: 0 créditos.`,
+      "ok"
+    );
+    renderTop500();
+  }
+
+  // Elimina listeners antiguos que lanzaban Twelve Data.
+  document.addEventListener("DOMContentLoaded",()=>{
+    setTimeout(()=>{
+      replaceButton("updatePrices",refreshSavedPortfolio,"Actualizar cartera con precios guardados");
+      replaceButton("updateAllHoldings",refreshSavedPortfolio,"Actualizar cartera con precios guardados");
+      replaceButton("updateVisibleMarket",refreshSavedCatalog,"Actualizar catálogo con precios guardados");
+      replaceButton("top500LoadUniverse",loadTop500Saved,"1. Cargar universo guardado");
+      replaceButton("top500Analyze",analyzeTop500Saved,"2. Clasificar datos guardados");
+    },1400);
+  });
+
+  // Contador: si /api_usage devuelve 429, mostrar el snapshot extraído por backend.
+  async function checkUsageV43(){
+    const st=document.getElementById("v42MiniStatus");
+    if(st)st.textContent="Consultando contador…";
+    const h=await headers();
+    const r=await fetch(MAILER_URL+"/api/twelve-usage",{headers:h});
+    const j=await r.json();
+
+    const u=r.ok?j:(j.cached||j.usage||null);
+    if(u){
+      if(typeof v42PaintCredits==="function")v42PaintCredits(u,true);
+      const plan=u.plan||"Basic";
+      const used=Number(u.daily_used);
+      const limit=Number(u.daily_limit||800);
+      const left=Number(u.daily_left);
+
+      document.getElementById("v42MiniPlan")&&(document.getElementById("v42MiniPlan").textContent=plan);
+      document.getElementById("v42MiniUsed")&&(document.getElementById("v42MiniUsed").textContent=Number.isFinite(used)?`${used.toLocaleString("es-MX")} / ${limit}`:"—");
+      document.getElementById("v42MiniLeft")&&(document.getElementById("v42MiniLeft").textContent=Number.isFinite(left)?Math.max(0,left).toLocaleString("es-MX"):"0");
+      document.getElementById("v42MiniMinute")&&(document.getElementById("v42MiniMinute").textContent=`${Number(u.minute_limit||8)}/min`);
+    }
+
+    if(!r.ok){
+      if(st)st.textContent=j.error||"Límite Twelve Data alcanzado.";
+      return;
+    }
+    if(st)st.textContent="Contador actualizado.";
+  }
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    setTimeout(()=>{
+      const old=document.getElementById("v42MiniCheck");
+      if(old){
+        const clone=old.cloneNode(true);
+        old.replaceWith(clone);
+        clone.id="v42MiniCheck";
+        clone.addEventListener("click",()=>checkUsageV43().catch(e=>{
+          document.getElementById("v42MiniStatus").textContent=e.message;
+        }));
+      }
+
+      const old2=document.getElementById("v41CheckUsage");
+      if(old2){
+        const clone=old2.cloneNode(true);
+        old2.replaceWith(clone);
+        clone.id="v41CheckUsage";
+        clone.addEventListener("click",()=>checkUsageV43().catch(e=>{
+          document.getElementById("v41UsageStatus").textContent=e.message;
+        }));
+      }
+    },1600);
+  });
+
+  // Guardia final: ninguna consulta directa a Twelve Data salvo Radar externo.
+  const originalFetch=window.fetch.bind(window);
+  window.fetch=async function(input,init){
+    const url=typeof input==="string"?input:(input?.url||"");
+    if(url.includes("api.twelvedata.com")){
+      const radarVisible=!document.getElementById("tab-externalRadar")?.classList.contains("hidden");
+      if(!radarVisible){
+        return new Response(JSON.stringify({
+          status:"error",
+          code:429,
+          message:"V43 bloqueó una consulta directa a Twelve Data. Esta función debe usar precios guardados."
+        }),{
+          status:200,
+          headers:{"Content-Type":"application/json","X-Inversor-Cache":"blocked-direct-twelve"}
+        });
+      }
+    }
+    return originalFetch(input,init);
+  };
 })();
 </script>
 
