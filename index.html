@@ -557,9 +557,75 @@ tr[data-chart-symbol]{transition:background .15s ease,box-shadow .15s ease}tr[da
 #tab-marketHistory>.market-chart-shell{display:none!important}
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style id="v24-auth-and-chart">
+  body.auth-loading .app{display:none!important}
+  #authGate{
+    min-height:100vh;display:grid;place-items:center;padding:22px;
+    background:
+      radial-gradient(circle at 18% 12%,rgba(37,137,255,.20),transparent 28%),
+      radial-gradient(circle at 82% 18%,rgba(255,51,79,.15),transparent 26%),
+      linear-gradient(145deg,#05070a,#0d1117 52%,#080a0e);
+    color:#f7faff;font-family:Arial,Helvetica,sans-serif
+  }
+  #authGate.hidden{display:none!important}
+  .auth-card{
+    width:min(470px,100%);padding:28px;border-radius:22px;
+    background:linear-gradient(145deg,rgba(18,23,31,.97),rgba(10,13,19,.98));
+    border:1px solid #30405a;box-shadow:0 24px 80px rgba(0,0,0,.48)
+  }
+  .auth-logo{font-size:31px;font-weight:900;margin-bottom:6px}
+  .auth-sub{color:#9ba8ba;line-height:1.55;margin-bottom:22px}
+  .google-login{
+    width:100%;padding:13px 16px;border-radius:12px;color:white;
+    background:linear-gradient(135deg,#1774de,#2f9cff);border:1px solid #4aa8ff;
+    font-weight:800;cursor:pointer
+  }
+  .auth-note{font-size:12px;color:#7f8b9d;margin-top:14px;line-height:1.45}
+  #v24UserBar{
+    display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+    margin:-4px 0 12px
+  }
+  #v24UserBar .user-pill{
+    padding:7px 10px;border:1px solid #2d3b50;border-radius:999px;
+    background:#0d121a;color:#b9c6d8;font-size:12px
+  }
+  #v23ChartToggle{margin-left:auto}
+  .v23-chart-wrap.v24-collapsed{display:none!important}
+  .v23-chart-wrap.v24-expanded{
+    min-height:80px!important;height:96px!important;
+  }
+  .v23-chart-wrap.v24-expanded .v23-chart-svg{
+    min-height:80px!important;height:96px!important;
+  }
+  .v23-chart-wrap.v24-expanded .v23-chart-hint{display:none}
+  @media(max-width:600px){
+    .v23-chart-wrap.v24-expanded,.v23-chart-wrap.v24-expanded .v23-chart-svg{
+      height:110px!important;min-height:90px!important
+    }
+  }
+</style>
+
 </head>
-<body>
+<body class="auth-loading">
+
+<div id="authGate">
+  <div class="auth-card">
+    <div class="auth-logo">Inversor Fácil</div>
+    <div class="auth-sub">Accede con Google para usar tu espacio de simulación. Tus datos locales actuales no se borran.</div>
+    <button id="googleLoginBtn" class="google-login" type="button">Continuar con Google</button>
+    <div id="authMessage" class="auth-note">Acceso protegido con Supabase Auth.</div>
+  </div>
+</div>
+
 <div class="app">
+
+<div id="v24UserBar" class="hidden">
+  <span id="v24UserEmail" class="user-pill">—</span>
+  <button id="v24LogoutBtn" class="secondary small" type="button">Cerrar sesión</button>
+</div>
+
 <div id="helpBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="help-modal">
     <div class="help-modal-head">
@@ -667,12 +733,12 @@ tr[data-chart-symbol]{transition:background .15s ease,box-shadow .15s ease}tr[da
     <div class="v23-stat"><span>Puntos visibles</span><strong id="v23StatPoints">0</strong></div>
     <div class="v23-stat"><span>Origen</span><strong id="v23StatSource">—</strong></div>
   </div>
-  <div class="v23-chart-wrap">
+  <div class="v23-chart-wrap v24-collapsed">
     <div class="v23-chart-hint">Mueve el cursor sobre la línea para leer cada punto</div>
     <svg id="v23ChartSvg" class="v23-chart-svg" viewBox="0 0 1100 380" role="img" aria-label="Gráfica histórica del activo seleccionado"></svg>
     <div id="v23ChartTip" class="v23-tip hidden"></div>
   </div>
-  <div class="v23-stage-foot"><span id="v23StageMessage"><b>Fácil de leer:</b> Día = cierres diarios; Semana = un cierre por semana; Mes = un cierre por mes; Año = un cierre por año.</span><button id="v23CompleteHistory" class="secondary small" type="button">Completar historial disponible</button></div>
+  <div class="v23-stage-foot"><span id="v23StageMessage"><b>Fácil de leer:</b> Día = cierres diarios; Semana = un cierre por semana; Mes = un cierre por mes; Año = un cierre por año.</span><div class="actions"><button id="v23ChartToggle" class="primary small" type="button">Desplegar gráfico</button><button id="v23CompleteHistory" class="secondary small" type="button">Completar historial disponible</button></div></div>
 </div>
 
 <section id="tab-dashboard">
@@ -5116,6 +5182,49 @@ $("top500Clear")?.addEventListener("click",()=>{if(confirm("¿Borrar únicamente
 
 
 
+
+// ===== V24 · Supabase Auth / Google =====
+const V24_SUPABASE_URL = "https://bcabfavdxxzauahpbmsa.supabase.co";
+const V24_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_F89WekECwWG6d4Nzpk4wag_9gN_ELBG";
+const v24Supabase = window.supabase.createClient(V24_SUPABASE_URL, V24_SUPABASE_PUBLISHABLE_KEY);
+
+async function v24ShowSession(session){
+  const gate=document.getElementById("authGate");
+  const bar=document.getElementById("v24UserBar");
+  const email=document.getElementById("v24UserEmail");
+  if(session?.user){
+    gate?.classList.add("hidden");
+    document.body.classList.remove("auth-loading");
+    bar?.classList.remove("hidden");
+    if(email) email.textContent=session.user.email || "Cuenta Google";
+  }else{
+    gate?.classList.remove("hidden");
+    document.body.classList.add("auth-loading");
+    bar?.classList.add("hidden");
+  }
+}
+
+document.getElementById("googleLoginBtn")?.addEventListener("click",async()=>{
+  const msg=document.getElementById("authMessage");
+  if(msg) msg.textContent="Abriendo Google…";
+  const {error}=await v24Supabase.auth.signInWithOAuth({
+    provider:"google",
+    options:{redirectTo:"https://inversor-facil.onrender.com"}
+  });
+  if(error && msg) msg.textContent="No se pudo iniciar sesión: "+error.message;
+});
+
+document.getElementById("v24LogoutBtn")?.addEventListener("click",async()=>{
+  await v24Supabase.auth.signOut();
+  location.reload();
+});
+
+v24Supabase.auth.onAuthStateChange((_event,session)=>v24ShowSession(session));
+(async()=>{
+  const {data}=await v24Supabase.auth.getSession();
+  await v24ShowSession(data?.session);
+})();
+
 // ===== V23 · Gráfica universal contextual =====
 const v23ChartState={symbol:null,source:"catalog",interval:"daily",window:"1y",locked:false,currentTab:"dashboard"};
 function v23Usd(v){return Number.isFinite(Number(v))?Number(v).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}):"—";}
@@ -5189,6 +5298,16 @@ function v23AttachDelegation(){
   document.querySelectorAll('[data-v23-interval]').forEach(b=>b.addEventListener('click',()=>{v23ChartState.interval=b.dataset.v23Interval;document.querySelectorAll('[data-v23-interval]').forEach(x=>x.classList.toggle('active',x===b));renderV23Chart();}));
   document.querySelectorAll('[data-v23-window]').forEach(b=>b.addEventListener('click',()=>{v23ChartState.window=b.dataset.v23Window;document.querySelectorAll('[data-v23-window]').forEach(x=>x.classList.toggle('active',x===b));renderV23Chart();}));
   $("v23CompleteHistory")?.addEventListener('click',async()=>{const symbol=v23ChartState.symbol;if(!symbol)return;if(v23ChartState.source==='radar'&&typeof loadRadarHistory==='function'){await loadRadarHistory(symbol);renderV23Chart();return;}if(typeof reconstructMarketHistory==='function'){showToast('Reconstruyendo el historial principal disponible…','warn');await reconstructMarketHistory();renderV23Chart();}});
+  $("v23ChartToggle")?.addEventListener("click",()=>{
+    const wrap=document.querySelector("#v23MarketStage .v23-chart-wrap");
+    const btn=$("v23ChartToggle");
+    if(!wrap||!btn)return;
+    const opening=wrap.classList.contains("v24-collapsed");
+    wrap.classList.toggle("v24-collapsed",!opening);
+    wrap.classList.toggle("v24-expanded",opening);
+    btn.textContent=opening?"Ocultar gráfico":"Desplegar gráfico";
+    if(opening) renderV23Chart();
+  });
 }
 
 load();populateFilters();renderExplore();renderCompare();render();renderMarketHistory();
