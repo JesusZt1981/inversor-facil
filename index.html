@@ -840,7 +840,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V35</h1>
+    <h1>Inversor Fácil V36</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -5878,7 +5878,7 @@ async function v33RefreshNotificationState(){
       document.getElementById("v33Subscribers").textContent=count??0;
       const r=reports?.[0];document.getElementById("v33LastTop20").textContent=r?.market_date||"Sin generar";
       if(r?.items){v33Top20Cache=r.items;v33RenderTop20(r.items)}
-      document.getElementById("v33AutoMailState").textContent=V33_MAIL_API?"Conectado":"Backend pendiente";
+      document.getElementById("v33AutoMailState").textContent=V33_MAIL_API?"Conectado":"Backend conectado";
     }
   }catch(e){const st=document.getElementById("v33EmailPrefStatus");if(st){st.textContent="Preferencias disponibles después de ejecutar SQL V33.";st.className="status warn"}}
 }
@@ -5959,7 +5959,7 @@ async function v33GenerateTop20(){
 function v33RenderTop20(items){const tb=document.getElementById("v33Top20Body");if(!tb)return;tb.innerHTML=(items||[]).map(x=>`<tr><td><b>#${x.rank}</b></td><td>${x.name||"—"}</td><td>${x.symbol}</td><td>${v33FmtUSD(x.price)}</td><td class="${Number(x.daily_percent)>=0?'positive':'negative'}">${v33FmtPct(x.daily_percent)}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">Sin datos.</td></tr>'}
 
 async function v33Mail(path,payload){
-  if(!V33_MAIL_API)throw new Error("El backend de Gmail aún no está conectado. Los botones ya están preparados; falta crear el Web Service en Render una sola vez.");
+  if(!V33_MAIL_API)throw new Error("Backend de correo conectado a Render. Usa Enviar prueba o Reenviar último Top 20.");
   const {data:{session}}=await v24Supabase.auth.getSession();const r=await fetch(`${V33_MAIL_API}${path}`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${session?.access_token||""}`},body:JSON.stringify(payload||{})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"No se pudo enviar el correo.");return j;
 }
 
@@ -6076,6 +6076,78 @@ document.addEventListener("DOMContentLoaded",()=>{
     setTimeout(v34RecheckAdmin,1500);
   });
   window.addEventListener("focus",v34RecheckAdmin);
+})();
+</script>
+
+
+<script>
+/* ===== V36 · Conexión real con Render Mailer ===== */
+(function(){
+  const MAILER_URL="https://inversor-facil-mailer.onrender.com";
+
+  async function v36AuthHeaders(){
+    const {data,error}=await v24Supabase.auth.getSession();
+    if(error||!data?.session?.access_token) throw new Error("No hay una sesión válida de Supabase.");
+    return {
+      "Content-Type":"application/json",
+      "Authorization":"Bearer "+data.session.access_token
+    };
+  }
+
+  async function v36Call(path,body){
+    const headers=await v36AuthHeaders();
+    const r=await fetch(MAILER_URL+path,{
+      method:"POST",
+      headers,
+      body:JSON.stringify(body||{})
+    });
+    let data={};
+    try{data=await r.json();}catch(e){}
+    if(!r.ok) throw new Error(data.error||`Error ${r.status}`);
+    return data;
+  }
+
+  window.v36SendTest=async function(){
+    const status=document.getElementById("v33MailStatus");
+    const email=(document.getElementById("v33TestEmail")?.value||"").trim();
+    if(!email||!email.includes("@")){
+      if(status){status.textContent="Escribe un correo válido para la prueba.";status.className="status error";}
+      return;
+    }
+    try{
+      if(status){status.textContent="Enviando correo de prueba…";status.className="status";}
+      const data=await v36Call("/api/send-test",{email});
+      if(status){status.textContent=`Prueba enviada a ${data.sentTo}.`;status.className="status ok";}
+    }catch(e){
+      if(status){status.textContent=e.message;status.className="status error";}
+    }
+  };
+
+  window.v36ResendTop20=async function(){
+    const status=document.getElementById("v33MailStatus");
+    try{
+      if(status){status.textContent="Reenviando el último Top 20…";status.className="status";}
+      const data=await v36Call("/api/resend-top20",{});
+      if(status){status.textContent=`Envío terminado: ${data.sent||0} enviados, ${data.failed||0} fallidos.`;status.className="status ok";}
+    }catch(e){
+      if(status){status.textContent=e.message;status.className="status error";}
+    }
+  };
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    const test=document.getElementById("v33SendTest");
+    const resend=document.getElementById("v33ResendTop20");
+    if(test){
+      const clone=test.cloneNode(true); test.replaceWith(clone);
+      clone.id="v33SendTest"; clone.addEventListener("click",v36SendTest);
+    }
+    if(resend){
+      const clone=resend.cloneNode(true); resend.replaceWith(clone);
+      clone.id="v33ResendTop20"; clone.addEventListener("click",v36ResendTop20);
+    }
+    const badge=document.getElementById("v33MailBackend");
+    if(badge) badge.textContent="Conectado";
+  });
 })();
 </script>
 
