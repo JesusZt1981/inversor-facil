@@ -880,7 +880,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V43</h1>
+    <h1>Inversor Fácil V44</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -915,20 +915,26 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
   <div class="metric"><span>Ganancia / pérdida (MXN)</span><strong id="mProfit">$0</strong></div>
 </section>
 
-<div id="v26MobileNav"><div class="v26-mobile-bar"><button id="v26MenuButton" type="button" aria-expanded="false">☰ Menú</button><span id="v26CurrentSection">Inicio</span></div><div id="v26MenuPanel" class="hidden"><button data-v26-tab="dashboard" class="active">Inicio</button><button data-v26-tab="portfolio">Mi cartera</button><button data-v26-tab="explore">Explorar</button><button data-v26-tab="marketHistory">Historial</button><button data-v26-tab="externalRadar">Radar externo</button><button data-v26-tab="top500">Top 500</button><button data-v26-tab="compare">Comparar</button><button data-v26-tab="backtest">¿Qué habría pasado?</button><button data-v26-tab="goals">Metas</button><button data-v26-tab="builder">Constructor</button><button data-v26-tab="academy">Academia</button><button data-v26-tab="settings">Configuración</button></div></div>
-<div class="tabs">
+<div id="v26MobileNav"><div class="v26-mobile-bar"><button id="v26MenuButton" type="button" aria-expanded="false">☰ Menú</button><span id="v26CurrentSection">Inicio</span></div><div id="v26MenuPanel" class="hidden"><button data-v26-tab="dashboard" class="active">Inicio</button><button data-v26-tab="portfolio">Mi cartera</button><button data-v26-tab="explore">Explorar</button><button data-v26-tab="marketHistory">Historial</button><button data-v26-tab="externalRadar">Radar externo</button><button data-v26-tab="top500">Top 500</button><button data-v26-tab="trading">Trading</button><button data-v26-tab="compare">Comparar</button><button data-v26-tab="backtest">¿Qué habría pasado?</button><button data-v26-tab="goals">Metas</button><button data-v26-tab="builder">Constructor</button><button data-v26-tab="academy">Academia</button><button data-v26-tab="settings">Configuración</button></div></div>
+<div class="tabs v44-main-tabs">
   <button class="tab active" data-tab="dashboard">Inicio</button>
   <button class="tab" data-tab="portfolio">Mi cartera</button>
   <button class="tab" data-tab="explore">Explorar</button>
   <button class="tab" data-tab="marketHistory">Historial</button>
   <button class="tab" data-tab="externalRadar">Radar externo</button>
   <button class="tab" data-tab="top500">Top 500</button>
-  <button class="tab" data-tab="compare">Comparar</button>
-  <button class="tab" data-tab="backtest">¿Qué habría pasado?</button>
-  <button class="tab" data-tab="goals">Metas</button>
-  <button class="tab" data-tab="builder">Constructor</button>
-  <button class="tab" data-tab="academy">Academia</button>
-  <button class="tab" data-tab="settings">Configuración</button>
+  <button class="tab" data-tab="trading">Trading</button>
+  <div class="v44-menu-wrap">
+    <button class="tab v44-menu-button" id="v44MenuButton" type="button" aria-expanded="false">Menú ▾</button>
+    <div id="v44MenuPanel" class="v44-menu-panel hidden">
+      <button type="button" data-v44-tab="compare">Comparar</button>
+      <button type="button" data-v44-tab="backtest">¿Qué habría pasado?</button>
+      <button type="button" data-v44-tab="goals">Metas</button>
+      <button type="button" data-v44-tab="builder">Constructor</button>
+      <button type="button" data-v44-tab="academy">Academia</button>
+      <button type="button" data-v44-tab="settings">Configuración</button>
+    </div>
+  </div>
 </div>
 
 
@@ -1029,12 +1035,30 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         <div class="v28-admin-subhead"><h3>Bloqueados</h3><button id="v28RefreshBlocked" class="secondary small" type="button">Actualizar</button></div>
         <div class="table-wrap"><table class="v28-user-table"><thead><tr><th>Correo</th><th>Fecha</th><th>Motivo</th><th>Acción</th></tr></thead><tbody id="v28BlockedBody"><tr><td colspan="4">Sin cargar.</td></tr></tbody></table></div>
 
+        <div class="v44-admin-block">
+          <div class="v28-admin-subhead"><h3>Actualizaciones automáticas · semana actual</h3><span class="badge">SOLO ADMIN</span></div>
+          <p class="muted">Este panel registra las actualizaciones del servidor que el navegador detecta durante la semana. Al cambiar de semana limpia el registro anterior. Sirve para validar que los precios nuevos llegaron después del cierre.</p>
+          <div id="v44AutoUpdateLog" class="v44-update-log"><div class="status">Esperando datos del servidor…</div></div>
+        </div>
+
+        <div class="v44-admin-block">
+          <div class="v28-admin-subhead"><h3>Salud de datos históricos</h3><span class="badge">AUDITORÍA</span></div>
+          <div class="grid grid4">
+            <div class="metric"><span>Catálogo</span><strong id="v44HealthTotal">—</strong></div>
+            <div class="metric"><span>Métrica ≥1 año</span><strong id="v44HealthYear">—</strong></div>
+            <div class="metric"><span>Por validar / completar</span><strong id="v44HealthMissing">—</strong></div>
+            <div class="metric"><span>5 años disponible</span><strong id="v44HealthFive">—</strong></div>
+          </div>
+          <div id="v44HealthStatus" class="status">El botón maestro audita la cobertura usando los datos actualmente guardados. V44 no inventa historial: donde no pueda comprobar al menos una métrica anual lo marcará como pendiente de backfill.</div>
+          <div id="v44HealthMissingList" class="v44-chip-list"></div>
+        </div>
+
         <div class="v33-admin-block">
           <div class="v28-admin-subhead"><h3>Top 500 · control rápido</h3><span class="badge">SOLO ADMIN</span></div>
           <p class="muted">Estos botones controlan el mismo módulo Top 500. El universo no es aleatorio: se construye de forma determinista con símbolos elegibles de NASDAQ/NYSE/AMEX y luego se ordena por rendimiento.</p>
           <div class="actions">
-            <button id="v33Top500Load" class="secondary">1. Cargar universo elegido</button>
-            <button id="v33Top500Analyze" class="primary">2. Analizar hasta 5 años</button>
+            <button id="v33Top500Load" class="secondary">Cargar universo elegido</button>
+            <button id="v33Top500Analyze" class="primary">Clasificar datos</button>
             <button id="v33Top500Open" class="secondary">Abrir Top 500</button>
           </div>
           <div id="v33Top500AdminStatus" class="status">Listo para cargar el universo.</div>
@@ -1478,12 +1502,12 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
       <div>
         <label for="top500Target">Tamaño del universo</label>
         <select id="top500Target">
-          <option value="20" selected>20 empresas · prueba correo</option>
-          <option value="100">100 empresas</option>
-          <option value="200">200 empresas</option>
-          <option value="300">300 empresas</option>
-          <option value="400">400 empresas</option>
-          <option value="500">500 empresas</option>
+          <option value="10">10 activos</option>
+          <option value="20">20 activos</option>
+          <option value="50">50 activos</option>
+          <option value="100">100 activos</option>
+          <option value="200">200 activos</option>
+          <option value="500" selected>Máximo 500</option>
         </select>
       </div>
       <div>
@@ -1497,7 +1521,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         </select>
       </div>
       <button id="top500LoadUniverse" class="secondary">1. Cargar universo</button>
-      <button id="top500Analyze" class="primary">2. Clasificar datos guardados</button>
+      <button id="top500Analyze" class="primary">Clasificar datos guardados</button>
     </div>
 
     <div class="top500-summary">
@@ -1532,6 +1556,54 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
         <thead><tr><th>#</th><th>Empresa</th><th>Símbolo</th><th>Bolsa</th><th>Hoy</th><th>Semana</th><th>Mes</th><th>Año</th><th>5 años</th><th>Último cierre</th><th>Acción</th></tr></thead>
         <tbody id="top500Rows"><tr><td colspan="10" class="empty">Todavía no hay resultados.</td></tr></tbody>
       </table>
+    </div>
+  </div>
+</section>
+
+
+<section id="tab-trading" class="hidden">
+  <div class="card v44-trading-hero">
+    <div class="section-head">
+      <div>
+        <span class="v44-kicker">PILOTO · SEGUIMIENTO TÉCNICO</span>
+        <h2>Trading · Radar del catálogo</h2>
+        <p class="muted" style="margin:0">Aquí vivirán las señales de estructura, máximos/mínimos, displacement y Fair Value Gaps. El Radar externo permanece separado y sirve para descubrir activos fuera del catálogo.</p>
+      </div>
+      <span class="badge">Sin órdenes reales</span>
+    </div>
+    <div class="grid grid4 v44-trading-stats" style="margin-top:14px">
+      <div class="metric"><span>Universo piloto</span><strong id="v44TradingUniverse">—</strong></div>
+      <div class="metric"><span>Datos diarios</span><strong id="v44TradingDaily">—</strong></div>
+      <div class="metric"><span>Intradía 1H / 15m</span><strong id="v44TradingIntraday">Pendiente</strong></div>
+      <div class="metric"><span>Señales activas</span><strong id="v44TradingSignals">0</strong></div>
+    </div>
+    <div class="v44-trading-flow">
+      <div><b>1D</b><span>Contexto y estructura</span></div>
+      <div>→</div>
+      <div><b>1H</b><span>Setup</span></div>
+      <div>→</div>
+      <div><b>15m</b><span>Entrada potencial</span></div>
+      <div>→</div>
+      <div><b>5m</b><span>Fase posterior</span></div>
+    </div>
+    <div class="status" id="v44TradingStatus">El botón maestro recalcula aquí todo lo que pueda derivarse de precios guardados. Las velas intradía requerirán el proceso automático de backend; no se consultarán manualmente desde este módulo.</div>
+  </div>
+
+  <div class="grid grid2" style="margin-top:14px">
+    <div class="card">
+      <h2>Universo piloto 20–30</h2>
+      <p class="muted">La selección se limita a activos que ya están en tu catálogo y tienen precio válido. Esta primera versión prioriza instrumentos con métricas guardadas; la selección definitiva incorporará liquidez, volumen y spread cuando el backend intradía esté disponible.</p>
+      <div id="v44TradingList" class="v44-chip-list"></div>
+    </div>
+    <div class="card">
+      <h2>Qué evaluaremos</h2>
+      <div class="v44-pattern-grid">
+        <div><b>Estructura</b><span>HH / HL / LH / LL</span></div>
+        <div><b>Swing points</b><span>Máximos y mínimos relevantes</span></div>
+        <div><b>Displacement</b><span>Movimiento direccional fuerte</span></div>
+        <div><b>Fair Value Gap</b><span>Desequilibrio de 3 velas</span></div>
+      </div>
+      <div class="status">No se mostrará “Comprar” o “Vender” por un patrón aislado. Primero se medirá la confluencia y el comportamiento histórico de cada setup.</div>
     </div>
   </div>
 </section>
@@ -6976,8 +7048,8 @@ document.addEventListener("DOMContentLoaded",()=>{
       replaceButton("updatePrices",refreshSavedPortfolio,"Actualizar cartera con precios guardados");
       replaceButton("updateAllHoldings",refreshSavedPortfolio,"Actualizar cartera con precios guardados");
       replaceButton("updateVisibleMarket",refreshSavedCatalog,"Actualizar catálogo con precios guardados");
-      replaceButton("top500LoadUniverse",loadTop500Saved,"1. Cargar universo guardado");
-      replaceButton("top500Analyze",analyzeTop500Saved,"2. Clasificar datos guardados");
+      replaceButton("top500LoadUniverse",loadTop500Saved,"Cargar universo guardado");
+      replaceButton("top500Analyze",analyzeTop500Saved,"Clasificar datos guardados");
     },1400);
   });
 
@@ -7053,6 +7125,191 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
     return originalFetch(input,init);
   };
+})();
+</script>
+
+
+<style id="v44-style">
+/* ===== V44 · interfaz sobria, botón maestro, menú y trading ===== */
+:root{--v44-blue:#2f7fb6;--v44-blue2:#476f97;--v44-gray:#344354;--v44-soft:#1a2634}
+.primary,.tabs .tab.active,.v32-pagination button.active{
+  background:linear-gradient(135deg,var(--v44-blue),var(--v44-blue2))!important;
+  color:#fff!important;border-color:#659bc5!important;box-shadow:none!important
+}
+.primary:hover,.tabs .tab.active:hover{filter:brightness(1.08)}
+#v42RefreshAllSaved{background:linear-gradient(135deg,#2676a9,#485f83)!important;border-color:#6aa6cd!important;color:#fff!important}
+/* El botón maestro es el único refresco manual de datos guardados. */
+#v30CatalogUpdateAdmin,#visibleMarketStatus,#v27PublishOnly,
+#v33Top500Load,#v33Top500Analyze,#top500LoadUniverse,#top500Analyze,
+#updatePrices,#updateAllHoldings,#updateVisibleMarket,#updateGoalHistory,
+#v33GenerateTop20{display:none!important}
+.v33-top20-note{display:none!important}
+#v33Top500Toolbar{grid-template-columns:minmax(160px,220px) minmax(180px,240px)!important}
+.v44-main-tabs{overflow:visible!important;align-items:center}
+.v44-menu-wrap{position:relative;display:inline-flex}
+.v44-menu-button{background:linear-gradient(145deg,#303d4c,#25303d)!important;color:#dfeaf5!important;border-color:#526579!important}
+.v44-menu-panel{position:absolute;right:0;top:calc(100% + 7px);z-index:90;min-width:230px;padding:8px;border-radius:13px;background:#111923;border:1px solid #405169;box-shadow:0 18px 45px rgba(0,0,0,.38)}
+.v44-menu-panel button{display:block;width:100%;text-align:left;border:0;border-radius:9px;padding:10px 11px;background:transparent;color:#dbe8f5;font-weight:800;cursor:pointer}
+.v44-menu-panel button:hover{background:#223247}
+.v44-kicker{display:inline-block;margin-bottom:6px;color:#70bce9;font-size:10px;font-weight:900;letter-spacing:.12em}
+.v44-trading-hero{border-color:#3b607f!important}
+.v44-trading-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:center;margin:14px 0;padding:12px;border:1px solid #384b61;border-radius:14px;background:#121c27}
+.v44-trading-flow>div:not(:nth-child(even)){padding:10px;text-align:center;border-radius:10px;background:#1d2b3a}
+.v44-trading-flow b{display:block;color:#8dccf3}.v44-trading-flow span{display:block;margin-top:3px;color:#aab8c8;font-size:11px}
+.v44-pattern-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0}.v44-pattern-grid>div{padding:11px;border:1px solid #384b61;border-radius:11px;background:#182330}.v44-pattern-grid b,.v44-pattern-grid span{display:block}.v44-pattern-grid span{margin-top:4px;color:#aab8c8;font-size:11px}
+.v44-admin-block{margin-top:16px;padding-top:14px;border-top:1px solid #3b485b}
+.v44-update-log{display:grid;gap:7px}.v44-log-row{display:grid;grid-template-columns:145px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid #35475b;border-radius:10px;background:#17222e;font-size:11px}.v44-log-row .ok{color:#64dbad}.v44-log-row .err{color:#ff9aaa}
+.v44-chip-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.v44-chip{padding:5px 8px;border:1px solid #40556c;border-radius:999px;background:#182432;color:#c9d8e7;font-size:10px;font-weight:800}.v44-chip.warn{border-color:#765f4b;color:#e1c29b;background:#2a241e}
+@media(max-width:899px){.v44-main-tabs{display:none!important}.v44-menu-panel{position:fixed;left:12px;right:12px;top:90px}.v44-trading-flow{grid-template-columns:1fr}.v44-trading-flow>div:nth-child(even){transform:rotate(90deg);text-align:center}.v44-pattern-grid{grid-template-columns:1fr}.v44-log-row{grid-template-columns:1fr}}
+</style>
+<script>
+/* ===== V44 · ORQUESTADOR MAESTRO, AUDITORÍA Y TRADING ===== */
+(function(){
+  const $v=id=>document.getElementById(id);
+  const V44_LOG_KEY='inversorFacilV44AutoUpdateLog';
+
+  function isAdmin(){try{return typeof v27IsAdmin==='function'&&v27IsAdmin()}catch(e){return false}}
+  function weekKey(d=new Date()){
+    const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);
+    return x.toISOString().slice(0,10);
+  }
+  function loadLog(){
+    try{const d=JSON.parse(localStorage.getItem(V44_LOG_KEY)||'{}');return d.week===weekKey()?d:{week:weekKey(),rows:[]}}catch(e){return {week:weekKey(),rows:[]}}
+  }
+  function saveLog(d){localStorage.setItem(V44_LOG_KEY,JSON.stringify(d))}
+  function addLog(row){
+    const d=loadLog();
+    const sig=[row.marketDate||'',row.serverTime||'',row.kind||''].join('|');
+    if(!d.rows.some(x=>x.sig===sig))d.rows.push({...row,sig});
+    d.rows=d.rows.slice(-12);saveLog(d);renderLog();
+  }
+  function renderLog(){
+    const el=$v('v44AutoUpdateLog');if(!el)return;
+    const d=loadLog();
+    if(!d.rows.length){el.innerHTML='<div class="status">Esta semana todavía no se ha detectado una actualización nueva del servidor.</div>';return}
+    el.innerHTML=[...d.rows].reverse().map(r=>`<div class="v44-log-row"><b>${new Date(r.detectedAt).toLocaleString('es-MX')}</b><span>${r.marketDate?'Cierre '+r.marketDate:'Actualización detectada'}${r.serverTime?' · servidor '+new Date(r.serverTime).toLocaleTimeString('es-MX'):''}</span><strong class="${r.ok===false?'err':'ok'}">${r.ok===false?'ERROR':'✓ OK'}</strong></div>`).join('');
+  }
+
+  async function detectServerUpdate(){
+    if(!window.v24Supabase)return;
+    try{
+      const {data,error}=await v24Supabase.from('shared_catalog').select('market_date,updated_at').order('updated_at',{ascending:false}).limit(1);
+      if(error)throw error;
+      const r=data?.[0];if(!r)return;
+      addLog({kind:'server',marketDate:r.market_date||'',serverTime:r.updated_at||'',detectedAt:new Date().toISOString(),ok:true});
+    }catch(e){
+      if(isAdmin())addLog({kind:'server-error',detectedAt:new Date().toISOString(),ok:false,message:e.message});
+    }
+  }
+
+  function annualMetric(a){return Number.isFinite(Number(a.yearPercent))||Number.isFinite(Number(a.histAnnualReturn))}
+  function fiveMetric(a){return Number.isFinite(Number(a.fiveYearPercent))}
+  function auditHistory(){
+    const eligible=assets.filter(a=>(a.type==='stock'||a.type==='etf'));
+    const year=eligible.filter(annualMetric);
+    const five=eligible.filter(fiveMetric);
+    const missing=eligible.filter(a=>!annualMetric(a));
+    $v('v44HealthTotal')&&($v('v44HealthTotal').textContent=eligible.length);
+    $v('v44HealthYear')&&($v('v44HealthYear').textContent=year.length);
+    $v('v44HealthMissing')&&($v('v44HealthMissing').textContent=missing.length);
+    $v('v44HealthFive')&&($v('v44HealthFive').textContent=five.length);
+    const list=$v('v44HealthMissingList');
+    if(list)list.innerHTML=missing.slice(0,40).map(a=>`<span class="v44-chip warn">${a.symbol}</span>`).join('')+(missing.length>40?`<span class="v44-chip">+${missing.length-40} más</span>`:'');
+    const st=$v('v44HealthStatus');
+    if(st)st.textContent=`Auditoría guardada: ${year.length} de ${eligible.length} activos tienen una métrica anual verificable en la app; ${missing.length} quedan pendientes de validar/backfill. Nota: una métrica anual no equivale todavía a conservar 12 meses completos de velas diarias; ese backfill persistente será tarea del backend.`;
+    return {total:eligible.length,year:year.length,missing:missing.length,five:five.length};
+  }
+
+  function v44Target(){
+    const eligible=assets.filter(a=>a.type==='stock'&&Number.isFinite(Number(a.price))&&Number(a.price)>0);
+    const sel=Number($v('top500Target')?.value)||500;
+    return Math.min(sel,500,eligible.length);
+  }
+  function rebuildTop500Saved(){
+    if(typeof top500Load!=='function'||typeof top500Save!=='function')return 0;
+    const d=top500Load();const target=v44Target();
+    d.target=target;
+    d.universe=assets.filter(a=>a.type==='stock'&&Number.isFinite(Number(a.price))&&Number(a.price)>0).slice().sort((a,b)=>String(a.symbol).localeCompare(String(b.symbol))).slice(0,target).map(a=>({symbol:a.symbol,name:a.name,exchange:a.exchange||'',type:'stock'}));
+    d.metrics=d.metrics||{};
+    d.universe.forEach(row=>{const a=assets.find(x=>x.symbol===row.symbol);if(!a)return;d.metrics[row.symbol]={today:Number.isFinite(Number(a.dailyPercent))?Number(a.dailyPercent):0,week:Number.isFinite(Number(a.weekPercent))?Number(a.weekPercent):null,month:Number.isFinite(Number(a.monthPercent))?Number(a.monthPercent):null,year:Number.isFinite(Number(a.yearPercent))?Number(a.yearPercent):null,fiveYear:Number.isFinite(Number(a.fiveYearPercent))?Number(a.fiveYearPercent):null,price:Number(a.price),lastClose:Number(a.price),checkedDay:new Date().toISOString().slice(0,10),savedOnly:true};});
+    top500Save(d);try{renderTop500()}catch(e){};
+    const s=$v('top500Status');if(s){s.textContent=`Top ${target} recalculado automáticamente con el catálogo guardado. 0 créditos.`;s.className='status ok'}
+    return target;
+  }
+
+  function tradingUniverse(){
+    const preferred=['SPY','QQQ','VOO','IWM','DIA','XLK','XLF','XLE','SMH','AAPL','MSFT','NVDA','AMZN','GOOGL','META','TSLA','AMD','AVGO','NFLX','JPM','BAC','XOM','CVX','WMT','COST','MELI','PLTR','RKLB','SOFI','UBER'];
+    const eligible=assets.filter(a=>(a.type==='stock'||a.type==='etf')&&Number.isFinite(Number(a.price))&&Number(a.price)>0);
+    const by=new Map(eligible.map(a=>[a.symbol,a]));
+    const picked=[];preferred.forEach(s=>{if(by.has(s)&&!picked.includes(by.get(s)))picked.push(by.get(s))});
+    eligible.slice().sort((a,b)=>Math.abs(Number(b.dailyPercent)||0)-Math.abs(Number(a.dailyPercent)||0)).forEach(a=>{if(picked.length<30&&!picked.includes(a))picked.push(a)});
+    return picked.slice(0,30);
+  }
+  function renderTrading(){
+    const u=tradingUniverse();
+    $v('v44TradingUniverse')&&($v('v44TradingUniverse').textContent=u.length);
+    const daily=u.filter(a=>Number.isFinite(Number(a.dailyPercent))).length;
+    $v('v44TradingDaily')&&($v('v44TradingDaily').textContent=`${daily}/${u.length}`);
+    const list=$v('v44TradingList');if(list)list.innerHTML=u.map(a=>`<span class="v44-chip">${a.symbol}</span>`).join('');
+    const st=$v('v44TradingStatus');if(st)st.textContent=`Universo piloto preparado con ${u.length} activos del catálogo. V44 puede recalcular contexto diario con datos guardados; 1H/15m/5m queda pendiente del alimentador intradía automático.`;
+    return u.length;
+  }
+
+  async function master(){
+    if(!isAdmin())throw new Error('Solo el administrador puede ejecutar el botón maestro.');
+    const btn=$v('v42RefreshAllSaved'),original=btn?.textContent;
+    try{
+      if(btn){btn.disabled=true;btn.textContent='ACTUALIZANDO TODA LA APP…'}
+      if(typeof v27LoadSharedCatalog==='function')await v27LoadSharedCatalog();
+      try{render()}catch(e){} try{renderExplore()}catch(e){} try{renderCompare()}catch(e){} try{renderCatalogResults()}catch(e){} try{renderPortfolioVisuals()}catch(e){} try{renderMarketHistory()}catch(e){} try{if(typeof v23RefreshSelector==='function')v23RefreshSelector()}catch(e){}
+      let hist=null;try{if(typeof captureMarketHistory==='function')hist=captureMarketHistory()}catch(e){}
+      const top500=rebuildTop500Saved();
+      let top20=0;try{if(typeof v42GenerateTop20FromSaved==='function')top20=(await v42GenerateTop20FromSaved()).length}catch(e){}
+      let published=assets.length;try{if(typeof v27PublishCatalog==='function')published=await v27PublishCatalog()}catch(e){}
+      const health=auditHistory();const trading=renderTrading();
+      try{if(typeof v27RefreshAdminStats==='function')await v27RefreshAdminStats()}catch(e){}
+      try{if(typeof v33LoadAlertState==='function')await v33LoadAlertState()}catch(e){}
+      await detectServerUpdate();
+      const msg=`Actualización maestra completa: ${published} activos · Top 20 ${top20} · Top ${top500} · Trading ${trading} · historial anual ${health.year}/${health.total} · Twelve Data 0 créditos.`;
+      const st=$v('v27AdminStatus');if(st){st.textContent=msg;st.className='status ok'}
+      if(typeof showToast==='function')showToast(msg,'ok');
+      return {published,top20,top500,trading,health,hist};
+    }finally{if(btn){btn.disabled=false;btn.textContent=original||'↻ ACTUALIZAR TODO CON PRECIOS GUARDADOS'}}
+  }
+
+  function setupMenu(){
+    const b=$v('v44MenuButton'),p=$v('v44MenuPanel');if(!b||!p)return;
+    b.addEventListener('click',e=>{e.stopPropagation();const open=p.classList.contains('hidden');p.classList.toggle('hidden',!open);b.setAttribute('aria-expanded',open?'true':'false')});
+    p.querySelectorAll('[data-v44-tab]').forEach(x=>x.addEventListener('click',()=>{showTab(x.dataset.v44Tab);p.classList.add('hidden');b.setAttribute('aria-expanded','false')}));
+    document.addEventListener('click',e=>{if(!p.contains(e.target)&&e.target!==b){p.classList.add('hidden');b.setAttribute('aria-expanded','false')}});
+  }
+
+  function patchMobileTrading(){
+    // V26 creó su mapa de etiquetas antes de V44; actualizamos el texto visual al usar Trading.
+    const p=$v('v26MenuPanel');if(!p)return;
+    const t=p.querySelector('[data-v26-tab="trading"]');
+    if(t)t.addEventListener('click',()=>{$v('v26CurrentSection')&&($v('v26CurrentSection').textContent='Trading')});
+  }
+
+  function normalizeTop500Control(){
+    const sel=$v('top500Target');if(!sel)return;
+    const max=Math.min(500,assets.filter(a=>a.type==='stock'&&Number.isFinite(Number(a.price))&&Number(a.price)>0).length);
+    [...sel.options].forEach(o=>{o.disabled=Number(o.value)>max});
+    const available=[...sel.options].filter(o=>!o.disabled).map(o=>Number(o.value));
+    sel.value=String(available.length?Math.max(...available):Math.min(max,10));
+    sel.addEventListener('change',()=>rebuildTop500Saved());
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    setupMenu();patchMobileTrading();renderLog();
+    setTimeout(async()=>{
+      normalizeTop500Control();auditHistory();renderTrading();await detectServerUpdate();
+      // Clonamos el botón para retirar listeners V42 y convertirlo en el único botón maestro.
+      const old=$v('v42RefreshAllSaved');if(old){const clone=old.cloneNode(true);old.replaceWith(clone);clone.id='v42RefreshAllSaved';clone.textContent='↻ ACTUALIZAR TODA LA APP CON DATOS GUARDADOS';clone.addEventListener('click',()=>master().catch(e=>{if(typeof showToast==='function')showToast(e.message,'error')}));}
+    },2600);
+  });
+  window.v44MasterRefresh=master;
 })();
 </script>
 
