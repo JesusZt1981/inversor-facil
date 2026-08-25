@@ -814,6 +814,33 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 }
 </style>
 
+
+<style id="v48Top500Styles">
+.v48-validation-cell{min-width:170px;max-width:230px}
+.v48-validation{font-weight:800;font-size:11px;letter-spacing:.02em;margin-bottom:4px}
+.v48-validation.valid{color:#45e6b1}
+.v48-validation.corrected{color:#56b7ff}
+.v48-validation.warn{color:#ffcc66}
+.v48-validation.neutral{color:#8fa3b8;font-weight:600}
+.v48-validation-cell small{display:block;line-height:1.25;color:#9aa9b8;margin-bottom:5px}
+.v48-stability{display:inline-block;padding:4px 7px;border-radius:999px;font-size:10px;font-weight:900;border:1px solid rgba(255,255,255,.15)}
+.v48-stability.s-MUY-ALTA,.v48-stability.s-ALTA{color:#42e6ad;background:rgba(40,190,140,.10)}
+.v48-stability.s-MEDIA{color:#ffd36b;background:rgba(230,180,50,.09)}
+.v48-stability.s-BAJA,.v48-stability.s-MUY-BAJA{color:#ff7d92;background:rgba(220,60,90,.09)}
+#v48Top500PersistentStatus{font-weight:700}
+#tab-top500 .top500-summary{grid-template-columns:repeat(6,minmax(120px,1fr))}
+@media(max-width:1100px){#tab-top500 .top500-summary{grid-template-columns:repeat(3,minmax(120px,1fr))}}
+</style>
+
+
+<style id="v49-integrity-style">
+.v49-integrity{margin-top:10px;padding:9px 11px;border:1px solid #344b60;border-radius:10px;background:#12202d;color:#a9c0d2;font-size:11px}
+.v49-integrity.ok{border-color:#2d6f63;color:#6ee1c0}
+.v49-integrity.warn{border-color:#725d34;color:#ffd27b}
+.v49-integrity.error{border-color:#7b3848;color:#ff9baa}
+.v44-menu-panel button.active{background:#223b55!important;color:#fff!important}
+</style>
+
 </head>
 <body class="auth-loading">
 <canvas id="marketAmbientCanvas" aria-hidden="true"></canvas>
@@ -880,7 +907,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V47</h1>
+    <h1>Inversor Fácil V49</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -1513,10 +1540,12 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
       <div>
         <label for="top500Sort">Ordenar por</label>
         <select id="top500Sort">
-          <option value="today">Ranking · Hoy</option>
+          <option value="quality" selected>⭐ Mejor inversión · estabilidad</option>
+          <option value="fiveYear">Ranking · 5 años</option>
+          <option value="year">Ranking · Año</option>
+          <option value="month">Ranking · Mes</option>
           <option value="week">Ranking · Semana</option>
-          <option value="month" selected>Ranking · Mes</option>
-          <option value="year">Ranking · Año</option><option value="fiveYear">Ranking · 5 años</option>
+          <option value="today">Ranking · Hoy</option>
           <option value="name">Nombre</option>
         </select>
       </div>
@@ -1527,13 +1556,20 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
     <div class="top500-summary">
       <div class="metric"><span>Empresas en universo</span><strong id="top500UniverseCount">0</strong></div>
       <div class="metric"><span>Empresas analizadas</span><strong id="top500AnalyzedCount">0</strong></div>
-      <div class="metric"><span>Mejor del mes</span><strong id="top500BestMonth">—</strong></div>
-      <div class="metric"><span>Mejor de ~5 años</span><strong id="top500BestYear">—</strong></div>
+      <div class="metric"><span>Pendientes</span><strong id="v48Top500Pending">0</strong></div>
+      <div class="metric"><span>Progreso</span><strong id="v48Top500Progress">0%</strong></div>
+      <div class="metric"><span>Mejor score histórico</span><strong id="top500BestMonth">—</strong></div>
+      <div class="metric"><span>Última actualización</span><strong id="top500BestYear">—</strong></div>
+    </div>
+    <div id="v48Top500PersistentStatus" class="status" style="margin-top:10px">
+      Top 500 todavía no iniciado.
     </div>
 
     
 <div class="v35-top20-note">
-  <b>Top 20 por correo:</b> con 20 empresas la prueba tardará aproximadamente 4–6 minutos incluyendo la espera inicial de seguridad. Después, al ampliar el universo, el Top 20 se recalcula con todas las empresas analizadas.
+  <b>V48 · Ranking inteligente:</b> “Mejor inversión · estabilidad” prioriza la consistencia de 1 a 5 años y penaliza contradicciones o movimientos extremos. 
+  Un activo sin suficiente antigüedad muestra S/A en 1 o 5 años: V48 ya no extrapola un mes de cotización como si fueran cinco años.
+  Si detecta un dato sospechoso aparece <b>Validar en internet</b>; al pulsarlo vuelve a consultar el histórico, corrige automáticamente periodos inválidos y muestra <b>CORREGIDO</b> o <b>LOS DATOS SON CORRECTOS</b>.
 </div>
 
 <div id="v34Top500RoleStatus" class="v34-role-status">Comprobando permisos de administrador…</div>
@@ -1553,7 +1589,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
     </div>
     <div class="table-wrap">
       <table class="top500-table">
-        <thead><tr><th>#</th><th>Empresa</th><th>Símbolo</th><th>Bolsa</th><th>Hoy</th><th>Semana</th><th>Mes</th><th>Año</th><th>5 años</th><th>Último cierre</th><th>Acción</th></tr></thead>
+        <thead><tr><th>#</th><th>Empresa</th><th>Símbolo</th><th>Bolsa</th><th>Score</th><th>Estabilidad</th><th>Hoy</th><th>Semana</th><th>Mes</th><th>Año</th><th>5 años</th><th>Validación</th><th>Último cierre</th><th>Acción</th></tr></thead>
         <tbody id="top500Rows"><tr><td colspan="10" class="empty">Todavía no hay resultados.</td></tr></tbody>
       </table>
     </div>
@@ -2132,14 +2168,79 @@ function load(){
   }catch{}
 }
 
+const V49_TABS=["dashboard","portfolio","explore","marketHistory","externalRadar","top500","trading","compare","backtest","goals","builder","academy","settings"];
+
 function showTab(name){
-  ["dashboard","portfolio","explore","marketHistory","externalRadar","top500","compare","backtest","goals","builder","academy","settings"].forEach(t=>{
-    $(`tab-${t}`).classList.toggle("hidden",t!==name);
-    document.querySelector(`.tab[data-tab="${t}"]`).classList.toggle("active",t===name)
-  })
-  if(typeof mountV23MarketStage==="function") mountV23MarketStage(name);
+  if(!V49_TABS.includes(name)){
+    // V49: botones como “Menú” no son secciones y ya no pueden ocultar el contenido.
+    return false;
+  }
+
+  V49_TABS.forEach(t=>{
+    const section=$(`tab-${t}`);
+    if(section)section.classList.toggle("hidden",t!==name);
+  });
+
+  // Barra principal de computadora.
+  document.querySelectorAll(".tab[data-tab]").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.tab===name);
+  });
+
+  // Menú secundario de computadora.
+  document.querySelectorAll("[data-v44-tab]").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.v44Tab===name);
+  });
+
+  // Menú móvil.
+  document.querySelectorAll("[data-v26-tab]").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.v26Tab===name);
+  });
+
+  const labels={
+    dashboard:"Inicio",
+    portfolio:"Mi cartera",
+    explore:"Explorar",
+    marketHistory:"Historial",
+    externalRadar:"Radar externo",
+    top500:"Top 500",
+    trading:"Trading",
+    compare:"Comparar",
+    backtest:"¿Qué habría pasado?",
+    goals:"Metas",
+    builder:"Constructor",
+    academy:"Academia",
+    settings:"Configuración"
+  };
+
+  const current=$("v26CurrentSection");
+  if(current)current.textContent=labels[name]||name;
+
+  // Cerrar menús después de navegar.
+  const desktopMenu=$("v44MenuPanel");
+  const desktopBtn=$("v44MenuButton");
+  if(desktopMenu)desktopMenu.classList.add("hidden");
+  if(desktopBtn)desktopBtn.setAttribute("aria-expanded","false");
+
+  const mobileMenu=$("v26MenuPanel");
+  const mobileBtn=$("v26MenuButton");
+  if(mobileMenu)mobileMenu.classList.add("hidden");
+  if(mobileBtn)mobileBtn.setAttribute("aria-expanded","false");
+
+  if(typeof mountV23MarketStage==="function"){
+    try{mountV23MarketStage(name)}catch(e){console.warn("V49 mount market stage:",e)}
+  }
+
+  try{window.scrollTo({top:0,behavior:"smooth"})}catch(e){}
+  return true;
 }
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+
+window.showTab=showTab;
+
+// IMPORTANTE: sólo botones que realmente tienen data-tab.
+// El botón “Menú” conserva class="tab", pero no se interpreta como sección.
+document.querySelectorAll(".tab[data-tab]").forEach(
+  b=>b.addEventListener("click",()=>showTab(b.dataset.tab))
+);
 document.querySelectorAll(".goExplore").forEach(b=>b.addEventListener("click",()=>{$("typeFilter").value=b.dataset.type;renderExplore();showTab("explore")}));
 
 function totals(){
@@ -5590,27 +5691,45 @@ function top500DayKey(){return new Date().toISOString().slice(0,10);}
 function top500MonthStart(day){return `${String(day).slice(0,7)}-01`;}
 
 function top500MetricsFromSeries(values){
-  const rows=(values||[]).map(v=>({day:String(v.datetime||v.day||"").slice(0,10),close:Number(v.close)})).filter(v=>v.day&&Number.isFinite(v.close)&&v.close>0).sort((a,b)=>a.day.localeCompare(b.day));
+  const rows=(values||[])
+    .map(v=>({day:String(v.datetime||v.day||"").slice(0,10),close:Number(v.close)}))
+    .filter(v=>v.day&&Number.isFinite(v.close)&&v.close>0)
+    .sort((a,b)=>a.day.localeCompare(b.day));
+
   if(rows.length<2)return null;
-  const last=rows[rows.length-1];
-  const prev=rows.at(-2);
-  const weekTarget=new Date(`${last.day}T12:00:00`);weekTarget.setDate(weekTarget.getDate()-7);
-  const weekKey=weekTarget.toISOString().slice(0,10),weekFirst=rows.find(r=>r.day>=weekKey)||rows[0];
+
+  const last=rows.at(-1), prev=rows.at(-2), first=rows[0];
+  const spanDays=Math.max(0,Math.round((new Date(last.day+"T12:00:00")-new Date(first.day+"T12:00:00"))/86400000));
+
+  const pctFrom=(row)=>row?.close>0?(last.close/row.close-1)*100:null;
+  const targetRow=(days)=>{
+    const dt=new Date(last.day+"T12:00:00");
+    dt.setDate(dt.getDate()-days);
+    const key=dt.toISOString().slice(0,10);
+    return rows.find(r=>r.day>=key)||null;
+  };
+
+  const weekFirst=targetRow(7);
   const monthStart=top500MonthStart(last.day);
-  const monthFirst=rows.find(r=>r.day>=monthStart)||rows[0];
-  const yearTarget=new Date(`${last.day}T12:00:00`);yearTarget.setDate(yearTarget.getDate()-365);
-  const yearKey=yearTarget.toISOString().slice(0,10);
-  const yearFirst=rows.find(r=>r.day>=yearKey)||rows[0];
-  const fiveTarget=new Date(`${last.day}T12:00:00`);fiveTarget.setDate(fiveTarget.getDate()-1826);
-  const fiveKey=fiveTarget.toISOString().slice(0,10),fiveFirst=rows.find(r=>r.day>=fiveKey)||rows[0];
+  const monthFirst=rows.find(r=>r.day>=monthStart)||null;
+
+  // V48: NO extrapolar. 1 año sólo existe con ~11 meses reales;
+  // 5 años sólo existe con al menos ~4.5 años de cotización disponible.
+  const yearFirst=spanDays>=330?targetRow(365):null;
+  const fiveFirst=spanDays>=1640?targetRow(1826):null;
+
   return {
     day:last.day,
+    firstDay:first.day,
     price:last.close,
-    today:Number(prev?.close)>0?(last.close/prev.close-1)*100:null,
-    week:Number(weekFirst.close)>0?(last.close/weekFirst.close-1)*100:null,
-    month:Number(monthFirst.close)>0?(last.close/monthFirst.close-1)*100:null,
-    year:Number(yearFirst.close)>0?(last.close/yearFirst.close-1)*100:null, fiveYear:Number(fiveFirst.close)>0?(last.close/fiveFirst.close-1)*100:null,
-    points:rows.length
+    today:pctFrom(prev),
+    week:pctFrom(weekFirst),
+    month:pctFrom(monthFirst),
+    year:pctFrom(yearFirst),
+    fiveYear:pctFrom(fiveFirst),
+    points:rows.length,
+    spanDays,
+    historyYears:spanDays/365.25
   };
 }
 
@@ -5905,26 +6024,260 @@ function addTop500ToCatalog(symbol){
   populateFilters();save();renderExplore();showToast(`${item.name} (${symbol}) agregado al catálogo.`,"ok");
 }
 
+
+function v48Finite(v){return Number.isFinite(Number(v));}
+
+function v48Anomaly(m){
+  const reasons=[];
+  const abs=(v)=>Math.abs(Number(v));
+  if(v48Finite(m?.fiveYear) && abs(m.fiveYear)>2500)reasons.push("Movimiento de 5 años extraordinario");
+  if(v48Finite(m?.year) && abs(m.year)>1200)reasons.push("Movimiento anual extraordinario");
+  if(v48Finite(m?.month) && abs(m.month)>300)reasons.push("Movimiento mensual extraordinario");
+  if(v48Finite(m?.fiveYear) && Number(m?.spanDays||0)<1640)reasons.push("5 años sin antigüedad bursátil suficiente");
+  if(v48Finite(m?.year) && Number(m?.spanDays||0)<330)reasons.push("1 año sin antigüedad bursátil suficiente");
+  return reasons;
+}
+
+function v48Quality(m){
+  if(!m || !v48Finite(m.price))return {score:0,label:"SIN DATOS",reasons:["Sin precio utilizable"]};
+
+  let score=50, reasons=[];
+  const y=v48Finite(m.year)?Number(m.year):null;
+  const f=v48Finite(m.fiveYear)?Number(m.fiveYear):null;
+  const mo=v48Finite(m.month)?Number(m.month):null;
+
+  // La estabilidad pesa más que el impulso del día.
+  if(f!==null){
+    if(f>150){score+=22;reasons.push("5 años fuertemente positivos");}
+    else if(f>50){score+=17;reasons.push("5 años positivos");}
+    else if(f>0){score+=10;reasons.push("5 años en positivo");}
+    else {score-=22;reasons.push("5 años negativos");}
+  }else{
+    score-=4;reasons.push("Sin 5 años completos");
+  }
+
+  if(y!==null){
+    if(y>60){score+=18;reasons.push("Año muy positivo");}
+    else if(y>15){score+=14;reasons.push("Año positivo");}
+    else if(y>=0){score+=7;reasons.push("Año estable/positivo");}
+    else {score-=15;reasons.push("Año negativo");}
+  }else{
+    score-=3;reasons.push("Sin 1 año completo");
+  }
+
+  if(mo!==null){
+    if(mo>=0 && mo<=35)score+=6;
+    else if(mo>35 && mo<=100)score+=2;
+    else if(mo>100)score-=8; // evita premiar persecución de movimientos extremos
+    else if(mo<-20)score-=8;
+  }
+
+  // Consistencia entre horizontes.
+  if(f!==null && y!==null){
+    if(f>0 && y>0)score+=10;
+    if(f<0 && y>0)score-=8;
+    if(f>0 && y<0)score-=5;
+  }
+
+  const anomaly=v48Anomaly(m);
+  if(anomaly.length){
+    score-=25;
+    reasons.push("Dato sospechoso: requiere validación");
+  }
+
+  if(m?.validation?.status==="corrected")score-=2;
+  if(m?.validation?.status==="unverified")score-=12;
+
+  score=Math.max(0,Math.min(100,Math.round(score)));
+  const label=score>=85?"MUY ALTA":score>=72?"ALTA":score>=58?"MEDIA":score>=42?"BAJA":"MUY BAJA";
+  return {score,label,reasons};
+}
+
+function v48ValidationCell(symbol,m){
+  const anomaly=v48Anomaly(m);
+  const v=m?.validation||null;
+
+  if(v?.status==="corrected"){
+    return `<div class="v48-validation corrected">🔧 CORREGIDO</div><small>${v.message||"Dato corregido"}</small>`;
+  }
+  if(v?.status==="valid"){
+    return `<div class="v48-validation valid">✅ DATOS CORRECTOS</div><small>${v.message||"Validado online"}</small>`;
+  }
+  if(v?.status==="unverified"){
+    return `<div class="v48-validation warn">⚠️ NO VERIFICABLE</div><button class="secondary small v48Validate" data-symbol="${symbol}">Validar en internet</button>`;
+  }
+  if(anomaly.length){
+    return `<div class="v48-validation warn">⚠️ SOSPECHOSO</div><small>${anomaly[0]}</small><br><button class="secondary small v48Validate" data-symbol="${symbol}">Validar en internet</button>`;
+  }
+  return `<span class="v48-validation neutral">Sin anomalías</span>`;
+}
+
+async function v48ValidateInternet(symbol){
+  const d=top500Load();
+  const item=d.universe.find(x=>x.symbol===symbol);
+  const current=d.metrics?.[symbol];
+  if(!item||!current)return;
+
+  const btn=document.querySelector(`.v48Validate[data-symbol="${symbol}"]`);
+  if(btn){btn.disabled=true;btn.textContent="Validando…";}
+
+  top500Status(`Validando ${symbol} online y reconsultando su histórico bursátil…`);
+
+  try{
+    const key=$("marketKey").value.trim();
+    if(!key)throw new Error("Falta la clave de Twelve Data.");
+
+    const end=top500DayKey();
+    const start=shiftDay(end,-1830);
+    const payload=await top500FetchSeriesOne(symbol,key,start,end);
+    const fresh=top500MetricsFromSeries(payload?.values||[]);
+    if(!fresh)throw new Error("No se obtuvo histórico suficiente para validar.");
+
+    let corrected=false;
+    let message="Los datos son correctos.";
+    const oldYear=current.year, oldFive=current.fiveYear;
+
+    // Corrección automática fundamental: nunca mostrar 1y/5y si el activo
+    // no tiene suficiente antigüedad real en la serie obtenida.
+    if(fresh.spanDays<330 && v48Finite(oldYear)){
+      fresh.year=null; corrected=true;
+    }
+    if(fresh.spanDays<1640 && v48Finite(oldFive)){
+      fresh.fiveYear=null; corrected=true;
+    }
+
+    const remaining=v48Anomaly(fresh);
+
+    if(corrected){
+      message=`Corregido: el histórico disponible inicia ${fresh.firstDay}; no se extrapolan periodos que la acción todavía no tiene.`;
+      fresh.validation={status:"corrected",message,checkedAt:new Date().toISOString(),source:"consulta online de histórico"};
+    }else if(!remaining.length){
+      fresh.validation={status:"valid",message:"Los datos son correctos.",checkedAt:new Date().toISOString(),source:"consulta online de histórico"};
+    }else{
+      // Un movimiento extremo puede ser real. Se conserva, pero queda señalado
+      // como validado contra una segunda descarga de la serie.
+      fresh.validation={status:"valid",message:"Los datos extraordinarios se repitieron en la validación online; se conservan.",checkedAt:new Date().toISOString(),source:"consulta online de histórico"};
+    }
+
+    fresh.checkedDay=current.checkedDay||top500DayKey();
+    d.metrics[symbol]={...current,...fresh};
+    d.lastAnalysis=new Date().toISOString();
+    top500Save(d);
+    renderTop500();
+
+    top500Status(
+      d.metrics[symbol].validation.status==="corrected"
+        ? `${symbol}: corrigiendo completado. ${message}`
+        : `${symbol}: los datos son correctos.`,
+      "ok"
+    );
+  }catch(err){
+    const d2=top500Load();
+    if(d2.metrics?.[symbol]){
+      d2.metrics[symbol].validation={
+        status:"unverified",
+        message:String(err.message||err),
+        checkedAt:new Date().toISOString()
+      };
+      top500Save(d2);
+    }
+    renderTop500();
+    top500Status(`${symbol}: no fue posible completar la validación online: ${err.message}`,"warn");
+  }
+}
+
 function renderTop500(){
   if(!$("top500Rows"))return;
   const d=top500Load();
-  if($("top500Target"))$("top500Target").value=String(d.target||20);
-  const analyzed=d.universe.filter(x=>Number.isFinite(d.metrics?.[x.symbol]?.price));
+  if($("top500Target"))$("top500Target").value=String(d.target||500);
+
+  const analyzed=d.universe.filter(x=>v48Finite(d.metrics?.[x.symbol]?.price));
+  const completed=d.universe.filter(x=>d.metrics?.[x.symbol]?.checkedDay).length;
+  const pending=Math.max(0,d.universe.length-completed);
+  const pct=d.universe.length?completed/d.universe.length*100:0;
+
   $("top500UniverseCount").textContent=d.universe.length;
   $("top500AnalyzedCount").textContent=analyzed.length;
-  const bestMonth=[...analyzed].filter(x=>Number.isFinite(d.metrics[x.symbol].month)).sort((a,b)=>d.metrics[b.symbol].month-d.metrics[a.symbol].month)[0];
-  const bestYear=[...analyzed].filter(x=>Number.isFinite(d.metrics[x.symbol].fiveYear)).sort((a,b)=>d.metrics[b.symbol].fiveYear-d.metrics[a.symbol].fiveYear)[0];
-  $("top500BestMonth").textContent=bestMonth?`${bestMonth.symbol} ${d.metrics[bestMonth.symbol].month>=0?"+":""}${d.metrics[bestMonth.symbol].month.toFixed(1)}%`:"—";
-  $("top500BestYear").textContent=bestYear?`${bestYear.symbol} ${d.metrics[bestYear.symbol].fiveYear>=0?"+":""}${d.metrics[bestYear.symbol].fiveYear.toFixed(1)}%`:"—";
-  const sort=$("top500Sort")?.value||"month";
-  const rows=[...analyzed].sort((a,b)=>sort==="name"?a.name.localeCompare(b.name):((d.metrics[b.symbol]?.[sort]??-Infinity)-(d.metrics[a.symbol]?.[sort]??-Infinity))).slice(0,100);
-  if(!rows.length){$("top500Rows").innerHTML='<tr><td colspan="10" class="empty">Carga el universo y ejecuta el análisis para generar la clasificación.</td></tr>';return;}
-  $("top500Rows").innerHTML=rows.map((r,i)=>{const m=d.metrics[r.symbol]||{};return `<tr data-chart-symbol="${r.symbol}" data-chart-source="top500">
-    <td><span class="rank-badge">${i+1}</span></td><td class="top500-name"><strong>${r.name}</strong></td><td>${r.symbol}</td><td>${r.exchange||"—"}</td>
-    <td>${top500Pct(m.today)}</td><td>${top500Pct(m.week)}</td><td>${top500Pct(m.month)}</td><td>${top500Pct(m.year)}</td><td>${top500Pct(m.fiveYear)}</td><td>${m.price?usd(m.price):"—"}</td>
-    <td><button class="primary small top500Add" data-symbol="${r.symbol}">${assets.some(a=>a.symbol===r.symbol)?"Ya en catálogo":"Agregar"}</button></td></tr>`;}).join("");
-  document.querySelectorAll(".top500Add").forEach(b=>{if(assets.some(a=>a.symbol===b.dataset.symbol))b.disabled=true;else b.addEventListener("click",()=>addTop500ToCatalog(b.dataset.symbol));});
+  if($("v48Top500Pending"))$("v48Top500Pending").textContent=pending;
+  if($("v48Top500Progress"))$("v48Top500Progress").textContent=`${pct.toFixed(0)}%`;
+
+  const qualityRows=analyzed.map(x=>({x,q:v48Quality(d.metrics[x.symbol])}))
+    .sort((a,b)=>b.q.score-a.q.score);
+  const best=qualityRows[0];
+  $("top500BestMonth").textContent=best?`${best.x.symbol} · ${best.q.score}/100`:"—";
+
+  const last=d.lastAnalysis?new Date(d.lastAnalysis):null;
+  $("top500BestYear").textContent=last&&!Number.isNaN(last.getTime())
+    ? last.toLocaleString("es-MX",{dateStyle:"short",timeStyle:"short"})
+    : "—";
+
+  const persistent=$("v48Top500PersistentStatus");
+  if(persistent){
+    if(!d.universe.length){
+      persistent.textContent="Top 500 todavía no iniciado.";
+      persistent.className="status";
+    }else if(pending>0){
+      persistent.textContent=`⏳ Top 500 incompleto · ${completed}/${d.universe.length} revisadas · faltan ${pending}. El progreso queda guardado.`;
+      persistent.className="status warn";
+    }else{
+      persistent.textContent=`✅ Top 500 completado · ${completed}/${d.universe.length} · última actualización ${last?last.toLocaleString("es-MX"):"—"}.`;
+      persistent.className="status ok";
+    }
+  }
+
+  const sort=$("top500Sort")?.value||"quality";
+  let rows=[...analyzed];
+
+  if(sort==="quality"){
+    rows.sort((a,b)=>{
+      const qa=v48Quality(d.metrics[a.symbol]).score;
+      const qb=v48Quality(d.metrics[b.symbol]).score;
+      return qb-qa || (Number(d.metrics[b.symbol]?.fiveYear)||-Infinity)-(Number(d.metrics[a.symbol]?.fiveYear)||-Infinity);
+    });
+  }else if(sort==="name"){
+    rows.sort((a,b)=>a.name.localeCompare(b.name));
+  }else{
+    rows.sort((a,b)=>(d.metrics[b.symbol]?.[sort]??-Infinity)-(d.metrics[a.symbol]?.[sort]??-Infinity));
+  }
+
+  rows=rows.slice(0,500);
+
+  if(!rows.length){
+    $("top500Rows").innerHTML='<tr><td colspan="14" class="empty">Carga el universo y ejecuta el análisis para generar la clasificación.</td></tr>';
+    return;
+  }
+
+  $("top500Rows").innerHTML=rows.map((r,i)=>{
+    const m=d.metrics[r.symbol]||{};
+    const q=v48Quality(m);
+    return `<tr data-chart-symbol="${r.symbol}" data-chart-source="top500">
+      <td><span class="rank-badge">${i+1}</span></td>
+      <td class="top500-name"><strong>${r.name}</strong></td>
+      <td>${r.symbol}</td>
+      <td>${r.exchange||"—"}</td>
+      <td><strong>${q.score}/100</strong></td>
+      <td><span class="v48-stability s-${q.label.replaceAll(" ","-")}">${q.label}</span></td>
+      <td>${top500Pct(m.today)}</td>
+      <td>${top500Pct(m.week)}</td>
+      <td>${top500Pct(m.month)}</td>
+      <td>${top500Pct(m.year)}</td>
+      <td>${top500Pct(m.fiveYear)}</td>
+      <td class="v48-validation-cell">${v48ValidationCell(r.symbol,m)}</td>
+      <td>${m.price?usd(m.price):"—"}</td>
+      <td><button class="primary small top500Add" data-symbol="${r.symbol}">${assets.some(a=>a.symbol===r.symbol)?"Ya en catálogo":"Agregar"}</button></td>
+    </tr>`;
+  }).join("");
+
+  document.querySelectorAll(".top500Add").forEach(b=>{
+    if(assets.some(a=>a.symbol===b.dataset.symbol))b.disabled=true;
+    else b.addEventListener("click",()=>addTop500ToCatalog(b.dataset.symbol));
+  });
+
+  document.querySelectorAll(".v48Validate").forEach(b=>{
+    b.addEventListener("click",()=>v48ValidateInternet(b.dataset.symbol));
+  });
 }
+
 
 $("top500LoadUniverse")?.addEventListener("click",top500FetchUniverse);
 $("top500Analyze")?.addEventListener("click",top500Analyze);
@@ -6206,7 +6559,7 @@ function v23AttachDelegation(){
 }
 
 // ===== V26 · Menú móvil adaptativo =====
-(function(){const panel=document.getElementById("v26MenuPanel"),btn=document.getElementById("v26MenuButton"),current=document.getElementById("v26CurrentSection");if(!panel||!btn||!current)return;const labels={dashboard:"Inicio",portfolio:"Mi cartera",explore:"Explorar",marketHistory:"Historial",externalRadar:"Radar externo",top500:"Top 500",compare:"Comparar",backtest:"¿Qué habría pasado?",goals:"Metas",builder:"Constructor",academy:"Academia",settings:"Configuración"};btn.addEventListener("click",()=>{const open=panel.classList.contains("hidden");panel.classList.toggle("hidden",!open);btn.setAttribute("aria-expanded",open?"true":"false")});panel.querySelectorAll("[data-v26-tab]").forEach(b=>b.addEventListener("click",()=>{const tab=b.dataset.v26Tab;showTab(tab);current.textContent=labels[tab]||"Menú";panel.querySelectorAll("[data-v26-tab]").forEach(x=>x.classList.toggle("active",x===b));panel.classList.add("hidden");btn.setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"})}))})();
+(function(){const panel=document.getElementById("v26MenuPanel"),btn=document.getElementById("v26MenuButton"),current=document.getElementById("v26CurrentSection");if(!panel||!btn||!current)return;const labels={dashboard:"Inicio",portfolio:"Mi cartera",explore:"Explorar",marketHistory:"Historial",externalRadar:"Radar externo",top500:"Top 500",trading:"Trading",compare:"Comparar",backtest:"¿Qué habría pasado?",goals:"Metas",builder:"Constructor",academy:"Academia",settings:"Configuración"};btn.addEventListener("click",()=>{const open=panel.classList.contains("hidden");panel.classList.toggle("hidden",!open);btn.setAttribute("aria-expanded",open?"true":"false")});panel.querySelectorAll("[data-v26-tab]").forEach(b=>b.addEventListener("click",()=>{const tab=b.dataset.v26Tab;showTab(tab);current.textContent=labels[tab]||"Menú";panel.querySelectorAll("[data-v26-tab]").forEach(x=>x.classList.toggle("active",x===b));panel.classList.add("hidden");btn.setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"})}))})();
 
 // V27: botón Menú en la franja superior
 (function(){const top=document.getElementById("v27MenuButtonTop"),panel=document.getElementById("v26MenuPanel");if(!top||!panel)return;top.addEventListener("click",()=>{const open=panel.classList.contains("hidden");panel.classList.toggle("hidden",!open);top.textContent=open?"✕ Cerrar":"☰ Menú";});panel.querySelectorAll("[data-v26-tab]").forEach(b=>b.addEventListener("click",()=>{top.textContent="☰ Menú";}));})();
@@ -7786,7 +8139,44 @@ document.addEventListener("DOMContentLoaded",()=>{
   async function authHeaders(){const {data}=await v24Supabase.auth.getSession();const t=data?.session?.access_token;if(!t)throw new Error('Sesión inválida');return {'Content-Type':'application/json','Authorization':'Bearer '+t}}
   function sentState(){const day=new Date().toISOString().slice(0,10);try{const d=JSON.parse(localStorage.getItem(SENT_KEY)||'{}');return d.day===day?d:{day,items:[]}}catch(e){return {day,items:[]}}}
   async function maybeEmail(r){const c=cfg();if(!c.email||r.score<Number(c.emailScore||90)||!['buy','sell'].includes(r.dir))return;const s=sentState();if(s.items.length>=Number(c.maxEmails||5))return;const sig=`${r.symbol}|${r.dir}|${Math.floor(r.score/5)}`;if(s.items.includes(sig))return;
-    try{const h=await authHeaders();const resp=await fetch(MAILER_URL+'/api/trading-alert',{method:'POST',headers:h,body:JSON.stringify(r)});const j=await resp.json();if(!resp.ok)throw new Error(j.error||'No se pudo enviar alerta');s.items.push(sig);localStorage.setItem(SENT_KEY,JSON.stringify(s));toast(`${r.symbol}: alerta de Trading enviada por correo.`,'ok')}catch(e){console.warn('Trading email',e);}
+    try{
+      const h=await authHeaders();
+      const payload={
+        symbol:r.symbol,
+        name:r.name,
+        price:r.price,
+        score:r.score,
+        minimumScore:Number(c.emailScore||90),
+        signal:r.action,
+        status:r.action,
+        direction:r.dir,
+        dailyPercent:r.daily,
+        dynamicThreshold:r.threshold,
+        context1d:r.ctx,
+        structure1h:r.s1,
+        structure15m:r.s15,
+        displacement:!!r.disp,
+        fvg:!!r.gap,
+        reasons:Array.isArray(r.reasons)?r.reasons:[],
+        holding:!!r.holding,
+        entry:r.entry,
+        updated:r.updated
+      };
+      const resp=await fetch(MAILER_URL+'/api/trading-alert',{
+        method:'POST',
+        headers:h,
+        body:JSON.stringify(payload)
+      });
+      const j=await resp.json().catch(()=>({}));
+      if(!resp.ok)throw new Error(j.error||'No se pudo enviar alerta');
+      if(j.sent!==false){
+        s.items.push(sig);
+        localStorage.setItem(SENT_KEY,JSON.stringify(s));
+        toast(`${r.symbol}: alerta de Trading enviada por correo.`,'ok');
+      }
+    }catch(e){
+      console.warn('Trading email',e);
+    }
   }
   function toast(m,t){try{showToast(m,t)}catch(e){}}
 
@@ -7807,6 +8197,99 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{mount();document.querySelectorAll('.tab[data-tab="trading"]').forEach(b=>{const clone=b.cloneNode(true);b.replaceWith(clone);clone.addEventListener('click',()=>window.showTab('trading'))});const mob=document.querySelector('[data-v26-tab="trading"]');if(mob){const clone=mob.cloneNode(true);mob.replaceWith(clone);clone.addEventListener('click',()=>window.showTab('trading'))}},3000);LIVE.timer=setInterval(scan,300000)});
   window.v47Trading={scan,render,universe,priority,state:LIVE};
+})();
+</script>
+
+
+<script id="v49-integrity-script">
+/* ===== V49 · AUTODIAGNÓSTICO Y NAVEGACIÓN RESILIENTE ===== */
+(function(){
+  const TAB_IDS=["dashboard","portfolio","explore","marketHistory","externalRadar","top500","trading","compare","backtest","goals","builder","academy","settings"];
+
+  function auditDom(){
+    const missingSections=TAB_IDS.filter(t=>!document.getElementById("tab-"+t));
+    const mobileMissing=TAB_IDS.filter(t=>!document.querySelector(`[data-v26-tab="${t}"]`));
+    const desktopMain=["dashboard","portfolio","explore","marketHistory","externalRadar","top500","trading"]
+      .filter(t=>!document.querySelector(`.tab[data-tab="${t}"]`));
+    const desktopMenu=["compare","backtest","goals","builder","academy","settings"]
+      .filter(t=>!document.querySelector(`[data-v44-tab="${t}"]`));
+
+    return {
+      ok:!(missingSections.length||mobileMissing.length||desktopMain.length||desktopMenu.length),
+      missingSections,mobileMissing,desktopMain,desktopMenu
+    };
+  }
+
+  async function backendHealth(){
+    try{
+      const r=await fetch("https://inversor-facil-mailer.onrender.com/health",{cache:"no-store"});
+      const j=await r.json().catch(()=>({}));
+      return {ok:r.ok&&j.ok===true,detail:j};
+    }catch(e){
+      return {ok:false,error:e.message};
+    }
+  }
+
+  async function sessionHealth(){
+    try{
+      if(typeof v24Supabase==="undefined")return {ok:false,error:"Supabase no inicializado"};
+      const {data,error}=await v24Supabase.auth.getSession();
+      if(error)return {ok:false,error:error.message};
+      return {ok:!!data?.session?.user,user:!!data?.session?.user};
+    }catch(e){
+      return {ok:false,error:e.message};
+    }
+  }
+
+  window.v49RunIntegrityCheck=async function(){
+    const dom=auditDom();
+    const [backend,session]=await Promise.all([backendHealth(),sessionHealth()]);
+    const report={
+      checkedAt:new Date().toISOString(),
+      dom,
+      backend,
+      session,
+      core:{
+        showTab:typeof window.showTab==="function",
+        render:typeof window.render==="function",
+        renderTop500:typeof window.renderTop500==="function",
+        renderAcademy:typeof window.renderAcademy==="function",
+        renderBuilder:typeof window.renderBuilder==="function"
+      }
+    };
+    try{localStorage.setItem("inversorFacilV49Integrity",JSON.stringify(report))}catch(e){}
+    return report;
+  };
+
+  // Captura errores reales de ejecución para diagnóstico posterior.
+  window.addEventListener("error",e=>{
+    try{
+      const log=JSON.parse(localStorage.getItem("inversorFacilV49RuntimeErrors")||"[]");
+      log.push({at:new Date().toISOString(),message:e.message||"Error",source:e.filename||"",line:e.lineno||0});
+      localStorage.setItem("inversorFacilV49RuntimeErrors",JSON.stringify(log.slice(-20)));
+    }catch(x){}
+  });
+
+  window.addEventListener("unhandledrejection",e=>{
+    try{
+      const log=JSON.parse(localStorage.getItem("inversorFacilV49RuntimeErrors")||"[]");
+      log.push({at:new Date().toISOString(),message:String(e.reason?.message||e.reason||"Promise rechazada")});
+      localStorage.setItem("inversorFacilV49RuntimeErrors",JSON.stringify(log.slice(-20)));
+    }catch(x){}
+  });
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    // Garantiza que un usuario normal nunca quede sin navegación por una excepción previa.
+    setTimeout(()=>{
+      const dom=auditDom();
+      if(!dom.ok)console.error("V49 navegación incompleta",dom);
+    },300);
+
+    setTimeout(()=>window.v49RunIntegrityCheck().then(r=>{
+      if(!r.dom.ok)console.warn("V49 DOM audit",r.dom);
+      if(!r.backend.ok)console.warn("V49 backend health",r.backend);
+    }),2200);
+  });
 })();
 </script>
 
