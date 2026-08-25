@@ -7544,5 +7544,162 @@ document.addEventListener("DOMContentLoaded",()=>{
 })();
 </script>
 
+<style id="v45-admin-audit-style">
+/* ===== V45 · Administración equilibrada + auditoría semanal ===== */
+#v27AdminPanel .v45-share-full{margin-top:12px;padding:14px 16px;border:1px solid #3b4c61;border-radius:14px;background:#151f2b}
+#v27AdminPanel .v45-share-full h3{margin:0 0 7px}
+#v27AdminPanel .v45-admin-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px;align-items:start}
+#v27AdminPanel .v45-admin-column{min-width:0}
+#v27AdminPanel .v45-admin-column>.v44-admin-block:first-child,#v27AdminPanel .v45-admin-column>.v33-admin-block:first-child{margin-top:0;padding-top:0;border-top:0}
+#v27AdminPanel .v45-usage-log{display:grid;gap:7px;margin-top:9px}
+#v27AdminPanel .v45-usage-row{display:grid;grid-template-columns:105px 1fr auto;gap:9px;align-items:center;padding:9px 10px;border:1px solid #35475b;border-radius:10px;background:#17222e;font-size:11px}
+#v27AdminPanel .v45-usage-row strong{color:#8dccf3}
+#v27AdminPanel .v45-usage-row small{color:#aab8c8}
+#v27AdminPanel .v45-audit-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:9px}
+#v27AdminPanel .v45-audit-summary>div{padding:9px 10px;border:1px solid #35475b;border-radius:10px;background:#17222e}
+#v27AdminPanel .v45-audit-summary span,#v27AdminPanel .v45-audit-summary strong{display:block}
+#v27AdminPanel .v45-audit-summary span{font-size:10px;color:#9fb0c2;margin-bottom:3px}
+#v27AdminPanel .v45-audit-summary strong{font-size:15px}
+@media(max-width:899px){#v27AdminPanel .v45-admin-columns{grid-template-columns:1fr}#v27AdminPanel .v45-usage-row{grid-template-columns:1fr}.v45-audit-summary{grid-template-columns:1fr!important}}
+</style>
+<script>
+/* ===== V45 · Administración: distribución + auditoría semanal persistente ===== */
+(function(){
+  const WEEK_USAGE_KEY='inversorFacilV45TwelveWeek';
+  const MAILER_URL='https://inversor-facil-mailer.onrender.com';
+  const $v=id=>document.getElementById(id);
+
+  function mondayKey(d=new Date()){
+    const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    const day=(x.getDay()+6)%7;
+    x.setDate(x.getDate()-day);
+    return x.toISOString().slice(0,10);
+  }
+  function fmtDay(day){
+    try{return new Date(day+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'2-digit'});}catch{return day}
+  }
+  function loadUsageWeek(){
+    try{
+      const d=JSON.parse(localStorage.getItem(WEEK_USAGE_KEY)||'{}');
+      return d.week===mondayKey()?d:{week:mondayKey(),days:{}};
+    }catch{return {week:mondayKey(),days:{}}}
+  }
+  function saveUsageWeek(d){try{localStorage.setItem(WEEK_USAGE_KEY,JSON.stringify(d))}catch(e){}}
+  function recordUsage(u){
+    if(!u)return;
+    const used=Number(u.daily_used),left=Number(u.daily_left),limit=Number(u.daily_limit||800);
+    const stamp=u.checked_at||new Date().toISOString();
+    const day=String(stamp).slice(0,10);
+    if(!day||!Number.isFinite(used))return;
+    const d=loadUsageWeek();
+    const prev=d.days[day]||{};
+    d.days[day]={
+      day,
+      used:Math.max(Number(prev.used)||0,used),
+      left:Number.isFinite(left)?left:prev.left,
+      limit:Number.isFinite(limit)?limit:(prev.limit||800),
+      checked_at:stamp,
+      source:u.source||prev.source||'cache'
+    };
+    saveUsageWeek(d);renderUsageWeek();
+  }
+  function renderUsageWeek(){
+    const el=$v('v45UsageWeekLog');if(!el)return;
+    const d=loadUsageWeek();
+    const days=Object.values(d.days||{}).sort((a,b)=>a.day.localeCompare(b.day));
+    if(!days.length){el.innerHTML='<div class="status">Aún no hay snapshots de consumo Twelve Data en esta semana. Al consultar el contador o recibir un snapshot del servidor se guardará aquí.</div>';return}
+    el.innerHTML=days.map(r=>`<div class="v45-usage-row"><b>${fmtDay(r.day)}</b><span><strong>${Number(r.used).toLocaleString('es-MX')} créditos usados</strong><small>${Number.isFinite(Number(r.left))?Number(r.left).toLocaleString('es-MX')+' disponibles':'Disponibles: —'} · límite ${Number(r.limit||800).toLocaleString('es-MX')}</small></span><small>${r.checked_at?new Date(r.checked_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}):''}</small></div>`).join('');
+  }
+
+  async function authHeaders(){
+    const {data,error}=await v24Supabase.auth.getSession();
+    if(error||!data?.session?.access_token)throw new Error('No hay sesión válida de Supabase.');
+    return {'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token};
+  }
+  async function captureServerUsage(){
+    try{
+      if(typeof v27IsAdmin==='function'&&!v27IsAdmin())return;
+      const r=await fetch(MAILER_URL+'/api/twelve-usage-cache',{headers:await authHeaders()});
+      if(!r.ok)return;
+      const u=await r.json();
+      if(u?.checked_at)recordUsage(u);
+    }catch(e){}
+  }
+
+  async function renderWeeklyServerAudit(){
+    const log=$v('v44AutoUpdateLog');
+    if(!log||!window.v24Supabase)return;
+    try{
+      const start=mondayKey();
+      const endDate=new Date(start+'T12:00:00');endDate.setDate(endDate.getDate()+7);
+      const end=endDate.toISOString().slice(0,10);
+      const {data,error}=await v24Supabase.from('shared_catalog').select('symbol,market_date,updated_at').gte('market_date',start).lt('market_date',end).order('market_date',{ascending:true});
+      if(error)throw error;
+      const by={};
+      (data||[]).forEach(r=>{
+        const day=String(r.market_date||'').slice(0,10);if(!day)return;
+        const x=by[day]||(by[day]={day,count:0,last:null});x.count++;
+        if(r.updated_at&&(!x.last||r.updated_at>x.last))x.last=r.updated_at;
+      });
+      const rows=Object.values(by).sort((a,b)=>a.day.localeCompare(b.day));
+      if(!rows.length){log.innerHTML='<div class="status">Esta semana todavía no hay cierres nuevos guardados en el servidor.</div>';return}
+      log.innerHTML=rows.map(r=>`<div class="v44-log-row"><b>${fmtDay(r.day)}</b><span>Cierre ${r.day} · ${r.count} precios con fecha de mercado de ese día${r.last?' · última escritura '+new Date(r.last).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}):''}</span><strong class="ok">✓ GUARDADO</strong></div>`).join('');
+      const latest=rows.at(-1);
+      const last=$v('v45LastPriceDay');if(last)last.textContent=latest?.day||'—';
+      const cnt=$v('v45UpdatedCount');if(cnt)cnt.textContent=String(latest?.count||0);
+    }catch(e){log.innerHTML=`<div class="status error">No se pudo auditar el servidor: ${e.message}</div>`;}
+  }
+
+  function restructureAdmin(){
+    const panel=$v('v27AdminPanel');if(!panel)return;
+    const adminCard=panel.querySelector('.v27-admin-card');
+    const stats=adminCard?.querySelector('.v27-admin-stats');
+    const oldGrid=stats?.nextElementSibling;
+    if(!adminCard||!stats||!oldGrid||!oldGrid.classList.contains('grid2'))return;
+    const left=oldGrid.children[0],share=oldGrid.children[1];if(!left||!share)return;
+
+    share.classList.add('v45-share-full');
+    stats.insertAdjacentElement('afterend',share);
+
+    const summary=document.createElement('div');
+    summary.className='v45-audit-summary';
+    summary.innerHTML='<div><span>Último cierre guardado</span><strong id="v45LastPriceDay">—</strong></div><div><span>Precios con ese cierre</span><strong id="v45UpdatedCount">—</strong></div><div><span>Retención de bitácora</span><strong>Lun–Dom</strong></div>';
+    share.appendChild(summary);
+
+    oldGrid.className='v45-admin-columns';
+    left.classList.add('v45-admin-column');
+    const right=document.createElement('div');right.className='card v45-admin-column';right.style.boxShadow='none';
+    oldGrid.appendChild(right);
+
+    const auto=left.querySelector('#v44AutoUpdateLog')?.closest('.v44-admin-block');
+    const health=left.querySelector('#v44HealthStatus')?.closest('.v44-admin-block');
+    const top500=left.querySelector('#v33Top500AdminStatus')?.closest('.v33-admin-block');
+    const mail=left.querySelector('#v33MailStatus')?.closest('.v33-admin-block');
+
+    const usage=document.createElement('div');usage.className='v44-admin-block';
+    usage.innerHTML='<div class="v28-admin-subhead"><h3>Consumo Twelve Data · semana actual</h3><span class="badge">SOLO ADMIN</span></div><p class="muted">Guarda el mayor snapshot observado de créditos usados por día. Se reinicia al comenzar una nueva semana. Sirve para contrastar consumo con los cierres renovados.</p><div id="v45UsageWeekLog" class="v45-usage-log"></div>';
+
+    [auto,usage,health,top500,mail].forEach(x=>x&&right.appendChild(x));
+    renderUsageWeek();
+  }
+
+  function observeCreditPanel(){
+    const used=$v('v41DailyUsed');if(!used)return;
+    const obs=new MutationObserver(()=>captureServerUsage());
+    obs.observe(used,{childList:true,characterData:true,subtree:true});
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    setTimeout(async()=>{
+      restructureAdmin();
+      renderUsageWeek();
+      await Promise.allSettled([renderWeeklyServerAudit(),captureServerUsage()]);
+      observeCreditPanel();
+    },3000);
+  });
+  window.v45RefreshAdminAudit=async function(){await Promise.allSettled([renderWeeklyServerAudit(),captureServerUsage()]);};
+})();
+</script>
+
 </body>
 </html>
