@@ -4,20 +4,23 @@ import re
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 
-# Remove malformed V49 block containing literal backslashes at line ends.
-s=re.sub(
-    r'\\\n<script>\\\n/\* ===== V49 · Top 500 compartido entre dispositivos/usuarios ===== \*/\\\n.*?</script>\\\n',
-    '',
-    s,
-    flags=re.S,
-)
-# Remove any normal V49 block too.
-s=re.sub(
-    r'<script>\s*/\* ===== V49 · Top 500 compartido entre dispositivos/usuarios ===== \*/.*?</script>\s*',
-    '',
-    s,
-    flags=re.S,
-)
+# Remove every previous V49 block, including the malformed one with literal
+# backslashes at line ends. We locate the marker and remove the surrounding
+# script tag rather than depending on a fragile exact regex.
+v49_marker='/* ===== V49 · Top 500 compartido entre dispositivos/usuarios ===== */'
+while v49_marker in s:
+    idx=s.index(v49_marker)
+    start=s.rfind('<script>',0,idx)
+    end=s.find('</script>',idx)
+    if start<0 or end<0:
+        s=s.replace(v49_marker,'',1)
+        continue
+    end+=len('</script>')
+    while start>0 and s[start-1] in '\\\r\n':
+        start-=1
+    while end<len(s) and s[end] in '\\\r\n':
+        end+=1
+    s=s[:start]+s[end:]
 
 # Update save hook.
 s=re.sub(
@@ -31,6 +34,7 @@ s=s.replace(
     'function top500Save(d){\n  localStorage.setItem(TOP500_KEY,JSON.stringify(d));\n  if(typeof window.v50ScheduleTop500Publish==="function") window.v50ScheduleTop500Publish(d);\n}',
     1,
 )
+# In case the V50 hook was already installed, leave it unchanged.
 
 # Keep internal storage rows out of normal asset catalog.
 old='  for(const r of data){\n    const a=bySymbol.get(r.symbol);'
@@ -189,10 +193,9 @@ if marker not in s:
 
 p.write_text(s,encoding='utf-8')
 
-# Structural tests before commit.
 checks={
     'V50 marker':s.count(marker)==1,
-    'V49 removed':'V49 · Top 500 compartido entre dispositivos/usuarios' not in s,
+    'V49 removed':v49_marker not in s,
     'V50 save hook':'v50ScheduleTop500Publish' in s,
     'system rows filtered':'startsWith("T5SYS")' in s,
     'Top500 API':'/api/top500-shared' in s,
