@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inversor Fácil V51 · Sincronización ordenada</title>
+<title>Inversor Fácil V52 · Rendimiento + almacenamiento estable</title>
 <style>
 :root{
   --bg:#15110f;--panel:#211b19;--panel2:#2a211e;--line:#4a3932;
@@ -908,7 +908,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 
 <header>
   <div>
-    <h1>Inversor Fácil V49</h1>
+    <h1>Inversor Fácil V52</h1>
     <p class="muted">Simula, compara y aprende. No compra ni vende dinero real.</p>
   </div>
   <span class="badge">PAPER TRADING</span>
@@ -7720,13 +7720,56 @@ document.addEventListener("DOMContentLoaded",()=>{
   const queue=[];
   const queued=new Set();
   let running=false,lastRequestAt=0;
+  let memoryStore=null;
+
+  function pickSummary(h){
+    if(!h||typeof h!=='object')return null;
+    const out={};
+    ['day','price','today','week','month','year','fiveYear','coverageDays','points','updatedAt','error','lastErrorAt'].forEach(k=>{
+      if(h[k]!==undefined)out[k]=h[k];
+    });
+    return Object.keys(out).length?out:null;
+  }
 
   function loadStore(){
-    try{return JSON.parse(localStorage.getItem(V45_HISTORY_KEY)||'{}')||{}}
-    catch(e){return {}}
+    if(memoryStore)return memoryStore;
+    const store={};
+
+    // V52: migrar una sola vez el cache V45 que duplicaba datos en localStorage.
+    // Se conserva en memoria durante la sesión y se reconstruye desde Top500/Radar
+    // al volver a abrir la app. Así no perdemos información visible ni llenamos cuota.
+    try{
+      const legacy=JSON.parse(localStorage.getItem(V45_HISTORY_KEY)||'{}')||{};
+      Object.entries(legacy).forEach(([symbol,h])=>{const x=pickSummary(h);if(x)store[symbol]=x});
+      localStorage.removeItem(V45_HISTORY_KEY);
+    }catch(e){try{localStorage.removeItem(V45_HISTORY_KEY)}catch(x){}}
+
+    try{
+      const d=top500Load();
+      Object.entries(d.metrics||{}).forEach(([symbol,h])=>{
+        const x=pickSummary(h);if(!x)return;
+        const prev=store[symbol];
+        if(!prev || Number(x.coverageDays||0)>=Number(prev.coverageDays||0))store[symbol]=x;
+      });
+    }catch(e){}
+
+    try{
+      const r=radarLoad();
+      Object.entries(r.histories||{}).forEach(([symbol,values])=>{
+        const x=summarize(values||[]);if(!x)return;
+        const prev=store[symbol];
+        if(!prev || Number(x.coverageDays||0)>=Number(prev.coverageDays||0))store[symbol]=x;
+      });
+    }catch(e){}
+
+    memoryStore=store;
+    return memoryStore;
   }
+
   function saveStore(d){
-    try{localStorage.setItem(V45_HISTORY_KEY,JSON.stringify(d))}catch(e){console.warn('V45 history cache lleno',e)}
+    // V52: memoria solamente. La persistencia real ya existe en Top500 y Radar.
+    // Evita JSON.stringify + setItem de cientos de símbolos en cada vuelta de la cola.
+    memoryStore=d||{};
   }
   function dayDiff(a,b){
     const x=new Date(a+'T12:00:00Z'),y=new Date(b+'T12:00:00Z');
@@ -7762,6 +7805,11 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
   function hasCoverage(entry,days){
     if(!entry)return false;
+    // Si ya se consultó hoy, no volver a descargar el mismo símbolo aunque sea
+    // una empresa nueva que todavía no tenga 1 o 5 años de historia bursátil.
+    const today=(typeof nyDayKey==='function'?nyDayKey():new Date().toISOString().slice(0,10));
+    const checked=String(entry.updatedAt||entry.day||entry.lastErrorAt||'').slice(0,10);
+    if(checked===today)return true;
     if(days<=370)return Number.isFinite(Number(entry.year)) || Number(entry.coverageDays)>=330;
     return Number.isFinite(Number(entry.fiveYear)) || Number(entry.coverageDays)>=1650;
   }
@@ -7784,9 +7832,12 @@ document.addEventListener("DOMContentLoaded",()=>{
       radarSave(d);
     }catch(e){}
   }
-  function syncEverywhere(symbol,summary,values){
+  function syncEverywhere(symbol,summary,values,source){
     mergeSummary(symbol,summary);
-    syncToRadar(symbol,values);
+    // Top 500 sólo necesita métricas resumidas. Guardar 270 velas de cada una de
+    // 500 empresas dentro del Radar duplicaba megabytes y agotaba localStorage.
+    // Radar conserva su histórico completo para gráficas y métricas propias.
+    if(source==='radar')syncToRadar(symbol,values);
     try{
       const d=top500Load();d.metrics=d.metrics||{};
       const prev=d.metrics[symbol]||{};
@@ -7845,14 +7896,19 @@ document.addEventListener("DOMContentLoaded",()=>{
         }
         const summary=summarize(values||[]);
         if(!summary)throw new Error('Sin histórico utilizable.');
-        syncEverywhere(job.symbol,summary,values||[]);
+        syncEverywhere(job.symbol,summary,values||[],job.source);
         const label=summary.coverageDays>=1650?'5 años':summary.coverageDays>=330?'1 año':`${summary.coverageDays} días`;
         status(job.source,`${job.symbol}: histórico automático listo (${label}).`,'ok');
       }catch(e){
         const store=loadStore();store[job.symbol]={...(store[job.symbol]||{}),error:String(e.message||e),lastErrorAt:new Date().toISOString()};saveStore(store);
         status(job.source,`${job.symbol}: historial no disponible (${e.message}).`,'warn');
       }finally{queued.delete(job.key)}
-      try{v45HydrateTop500();window.renderTop500?.();window.renderExternalRadar?.()}catch(e){}
+      try{
+        v45HydrateTop500();
+        if(typeof window.v51RenderVisible==='function')window.v51RenderVisible('v52-history');
+        else if(job.source==='top500')window.renderTop500?.();
+        else if(job.source==='radar')window.renderExternalRadar?.();
+      }catch(e){}
     }
     running=false;
   }
@@ -7863,7 +7919,10 @@ document.addEventListener("DOMContentLoaded",()=>{
       (d.universe||[]).forEach(row=>{
         const h=store[row.symbol];if(!h)return;
         const prev=d.metrics[row.symbol]||{};
-        d.metrics[row.symbol]={...prev,...h,checkedDay:new Date().toISOString().slice(0,10),v45Auto:true};changed=true;
+        const stamp=String(h.updatedAt||h.day||'');
+        if(prev.v52HistoryStamp===stamp)return;
+        d.metrics[row.symbol]={...prev,...h,checkedDay:new Date().toISOString().slice(0,10),v45Auto:true,v52HistoryStamp:stamp};
+        changed=true;
       });
       if(changed)top500Save(d);
     }catch(e){}
@@ -7927,7 +7986,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   document.addEventListener('DOMContentLoaded',()=>{
     setTimeout(()=>{addNotes();tick();try{window.renderExternalRadar();window.renderTop500()}catch(e){}},3200);
-    setInterval(tick,30000);
+    setInterval(tick,60000);
   });
   window.v45History={load:loadStore,enqueue,tick};
 })();
