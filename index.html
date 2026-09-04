@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inversor Fácil V31 · Listas + Ranking Inteligente</title>
+<title>Inversor Fácil V51 · Sincronización ordenada</title>
 <style>
 :root{
   --bg:#15110f;--panel:#211b19;--panel2:#2a211e;--line:#4a3932;
@@ -841,6 +841,7 @@ input,select{background:#161c25!important;border-color:#435268!important;color:#
 .v44-menu-panel button.active{background:#223b55!important;color:#fff!important}
 </style>
 
+<link rel="stylesheet" href="assets/v51-performance.css?v=51">
 </head>
 <body class="auth-loading">
 <canvas id="marketAmbientCanvas" aria-hidden="true"></canvas>
@@ -6189,6 +6190,8 @@ async function v48ValidateInternet(symbol){
   }
 }
 
+window.v51Top500Page=window.v51Top500Page||1;
+
 function renderTop500(){
   if(!$("top500Rows"))return;
   const d=top500Load();
@@ -6244,17 +6247,24 @@ function renderTop500(){
   }
 
   rows=rows.slice(0,500);
+  const pageSize=30;
+  const pages=Math.max(1,Math.ceil(rows.length/pageSize));
+  if(!Number.isFinite(Number(window.v51Top500Page))||window.v51Top500Page<1)window.v51Top500Page=1;
+  if(window.v51Top500Page>pages)window.v51Top500Page=pages;
+  const start=(window.v51Top500Page-1)*pageSize;
+  const pageRows=rows.slice(start,start+pageSize);
 
   if(!rows.length){
     $("top500Rows").innerHTML='<tr><td colspan="14" class="empty">Carga el universo y ejecuta el análisis para generar la clasificación.</td></tr>';
+    document.getElementById("v51Top500Pagination")?.remove();
     return;
   }
 
-  $("top500Rows").innerHTML=rows.map((r,i)=>{
+  $("top500Rows").innerHTML=pageRows.map((r,i)=>{
     const m=d.metrics[r.symbol]||{};
     const q=v48Quality(m);
     return `<tr data-chart-symbol="${r.symbol}" data-chart-source="top500">
-      <td><span class="rank-badge">${i+1}</span></td>
+      <td><span class="rank-badge">${start+i+1}</span></td>
       <td class="top500-name"><strong>${r.name}</strong></td>
       <td>${r.symbol}</td>
       <td>${r.exchange||"—"}</td>
@@ -6271,6 +6281,28 @@ function renderTop500(){
     </tr>`;
   }).join("");
 
+  const top500Host=$("top500Rows").closest(".top500-table-wrap")||$("top500Rows").closest(".table-wrap")||$("top500Rows").closest("table");
+  let top500Nav=document.getElementById("v51Top500Pagination");
+  if(!top500Nav){
+    top500Nav=document.createElement("div");
+    top500Nav.id="v51Top500Pagination";
+    top500Nav.className="v51-pagination";
+    (top500Host||$("top500Rows")).insertAdjacentElement("afterend",top500Nav);
+  }
+  const lo=Math.max(1,window.v51Top500Page-2),hi=Math.min(pages,lo+4);
+  let navHtml='<button type="button" data-v51-page="prev">‹</button>';
+  if(lo>1)navHtml+='<button type="button" data-v51-page="1">1</button>'+(lo>2?'<span>…</span>':'');
+  for(let n=lo;n<=hi;n++)navHtml+=`<button type="button" data-v51-page="${n}" class="${n===window.v51Top500Page?'active':''}">${n}</button>`;
+  if(hi<pages)navHtml+=(hi<pages-1?'<span>…</span>':'')+`<button type="button" data-v51-page="${pages}">${pages}</button>`;
+  navHtml+='<button type="button" data-v51-page="next">›</button>'+`<span class="v51-page-info">${rows.length} resultados · 30 por página</span>`;
+  top500Nav.innerHTML=navHtml;
+  top500Nav.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+    const p=b.dataset.v51Page;
+    window.v51Top500Page=p==="prev"?Math.max(1,window.v51Top500Page-1):p==="next"?Math.min(pages,window.v51Top500Page+1):Number(p);
+    renderTop500();
+    top500Host?.scrollIntoView({behavior:"smooth",block:"start"});
+  }));
+
   document.querySelectorAll(".top500Add").forEach(b=>{
     if(assets.some(a=>a.symbol===b.dataset.symbol))b.disabled=true;
     else b.addEventListener("click",()=>addTop500ToCatalog(b.dataset.symbol));
@@ -6284,7 +6316,7 @@ function renderTop500(){
 
 $("top500LoadUniverse")?.addEventListener("click",top500FetchUniverse);
 $("top500Analyze")?.addEventListener("click",top500Analyze);
-$("top500Sort")?.addEventListener("input",renderTop500);
+$("top500Sort")?.addEventListener("input",()=>{window.v51Top500Page=1;renderTop500();});
 $("top500Pause")?.addEventListener("click",()=>{top500QueueState.paused=!top500QueueState.paused;$("top500Pause").textContent=top500QueueState.paused?"Continuar":"Pausar";top500QueueUI();});
 $("top500Cancel")?.addEventListener("click",()=>{top500QueueState.cancelled=true;top500QueueState.paused=false;top500QueueUI();});
 $("top500Clear")?.addEventListener("click",()=>{if(confirm("¿Borrar únicamente el universo y análisis Top 500? Tu cartera, catálogo e historial principal no se modificarán.")){localStorage.removeItem(TOP500_KEY);renderTop500();top500Status("Análisis Top 500 borrado.");}});
@@ -6293,7 +6325,7 @@ $("top500Clear")?.addEventListener("click",()=>{if(confirm("¿Borrar únicamente
 
 
 // ===== V25 · Fondo de mercado vivo + audio ambiental =====
-(function(){const canvas=document.getElementById("marketAmbientCanvas"),ctx=canvas&&canvas.getContext("2d");if(!canvas||!ctx)return;let w=0,h=0,dpr=1,t=0;function resize(){dpr=Math.min(window.devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+"px";canvas.style.height=h+"px";ctx.setTransform(dpr,0,0,dpr,0,0)}resize();addEventListener("resize",resize,{passive:true});function draw(){t+=.006;ctx.clearRect(0,0,w,h);let bg=ctx.createLinearGradient(0,0,w,h);bg.addColorStop(0,"rgba(2,9,20,.94)");bg.addColorStop(.52,"rgba(5,13,25,.92)");bg.addColorStop(1,"rgba(15,4,11,.94)");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);const cols=Math.max(8,Math.floor(w/110)),rows=Math.max(5,Math.floor(h/120)),pts=[];for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){const px=x/cols*w+Math.sin(t*3+x*.8+y)*10,py=y/rows*h+Math.cos(t*2+y*.7+x)*7;pts.push([px,py])}ctx.lineWidth=.55;for(let i=0;i<pts.length-cols-1;i++){const a=pts[i],b=pts[i+1];ctx.strokeStyle=i%5===0?"rgba(255,50,80,.07)":"rgba(70,160,255,.075)";ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}function chart(base,amp,speed,color,phase){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=1.6;ctx.shadowBlur=10;ctx.shadowColor=color;ctx.beginPath();for(let x=0;x<=w;x+=6){const n=Math.sin(x*.012+t*speed+phase)*.46+Math.sin(x*.028-t*speed*.62+phase*1.7)*.22+Math.sin(x*.005+t*.9)*.34,y=base+n*amp;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();ctx.restore()}chart(h*.35,Math.min(105,h*.13),2.2,"rgba(47,160,255,.78)",0);chart(h*.62,Math.min(125,h*.16),1.65,"rgba(255,49,79,.72)",1.8);for(let i=0;i<16;i++){const x=(i*137+t*70*(1+i%3))%(w+80)-40,y=(i*83+Math.sin(t*2+i)*80)%(h+100)-50;ctx.fillStyle=i%3===0?"rgba(255,64,95,.13)":"rgba(64,169,255,.13)";ctx.beginPath();ctx.arc(x,y,1.5+(i%4)*.45,0,Math.PI*2);ctx.fill()}requestAnimationFrame(draw)}requestAnimationFrame(draw)})();
+(function(){const canvas=document.getElementById("marketAmbientCanvas"),ctx=canvas&&canvas.getContext("2d");if(!canvas||!ctx)return;let w=0,h=0,dpr=1,t=0;function resize(){dpr=Math.min(window.devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width=w+"px";canvas.style.height=h+"px";ctx.setTransform(dpr,0,0,dpr,0,0)}resize();addEventListener("resize",resize,{passive:true});function draw(){t+=.006;ctx.clearRect(0,0,w,h);let bg=ctx.createLinearGradient(0,0,w,h);bg.addColorStop(0,"rgba(2,9,20,.94)");bg.addColorStop(.52,"rgba(5,13,25,.92)");bg.addColorStop(1,"rgba(15,4,11,.94)");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);const cols=Math.max(8,Math.floor(w/110)),rows=Math.max(5,Math.floor(h/120)),pts=[];for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){const px=x/cols*w+Math.sin(t*3+x*.8+y)*10,py=y/rows*h+Math.cos(t*2+y*.7+x)*7;pts.push([px,py])}ctx.lineWidth=.55;for(let i=0;i<pts.length-cols-1;i++){const a=pts[i],b=pts[i+1];ctx.strokeStyle=i%5===0?"rgba(255,50,80,.07)":"rgba(70,160,255,.075)";ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}function chart(base,amp,speed,color,phase){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=1.6;ctx.shadowBlur=10;ctx.shadowColor=color;ctx.beginPath();for(let x=0;x<=w;x+=6){const n=Math.sin(x*.012+t*speed+phase)*.46+Math.sin(x*.028-t*speed*.62+phase*1.7)*.22+Math.sin(x*.005+t*.9)*.34,y=base+n*amp;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();ctx.restore()}chart(h*.35,Math.min(105,h*.13),2.2,"rgba(47,160,255,.78)",0);chart(h*.62,Math.min(125,h*.16),1.65,"rgba(255,49,79,.72)",1.8);for(let i=0;i<16;i++){const x=(i*137+t*70*(1+i%3))%(w+80)-40,y=(i*83+Math.sin(t*2+i)*80)%(h+100)-50;ctx.fillStyle=i%3===0?"rgba(255,64,95,.13)":"rgba(64,169,255,.13)";ctx.beginPath();ctx.arc(x,y,1.5+(i%4)*.45,0,Math.PI*2);ctx.fill()}if(document.hidden){setTimeout(()=>requestAnimationFrame(draw),900)}else if(matchMedia("(max-width:760px)").matches){setTimeout(()=>requestAnimationFrame(draw),66)}else requestAnimationFrame(draw)}requestAnimationFrame(draw)})();
 
 // ===== V26 · Música original de concentración =====
 (function(){const btn=document.getElementById("v25SoundBtn"),label=document.getElementById("v25SoundLabel"),audio=document.getElementById("v26FocusAudio");if(!btn||!label||!audio)return;audio.volume=.12;const st=on=>{btn.dataset.on=on?"true":"false";btn.setAttribute("aria-pressed",on?"true":"false");label.textContent=on?"Ambiente suave: encendido":"Ambiente suave: apagado"};st(false);btn.addEventListener("click",async()=>{try{if(audio.paused){await audio.play();st(true)}else{audio.pause();st(false)}}catch(e){label.textContent="Toca de nuevo para activar audio";st(false)}});})();
@@ -6393,7 +6425,7 @@ async function v27LoadSharedCatalog(){
     const obj={symbol:r.symbol,name:r.name,type:r.asset_type,risk:r.risk||"Medio",price:Number(r.price),country:r.country||"",sector:r.sector||"",dividend:r.dividend||"No determinado",aliases:r.aliases||"",currency:r.currency||"USD",exchange:r.exchange||"",priceSource:"real",updatedAt:r.updated_at,dailyPercent:Number(r.daily_percent),dailyChange:Number(r.daily_change),fractional_note:r.fractional_note||"Depende del broker"};
     if(a)Object.assign(a,obj);else assets.push(obj);
   }
-  try{renderExplore();render();}catch(e){}
+  try{if(typeof window.v51RenderVisible==="function")window.v51RenderVisible("catalog");else{renderExplore();render();}}catch(e){}
 }
 async function v27PublishCatalog(){
   if(!v27IsAdmin())throw new Error("Solo el administrador puede publicar el catálogo.");
@@ -6583,9 +6615,9 @@ setTimeout(()=>{try{renderExternalRadar()}catch{}},1800);
 setTimeout(()=>{v23AttachDelegation();mountV23MarketStage("dashboard");},250);
 </script>
 <script>
-(function(){let last=0;window.v30ApplyPermissions=function(){const a=(()=>{try{return typeof v27IsAdmin==="function"&&v27IsAdmin()}catch(e){return false}})();document.body.classList.toggle("v30-admin",a);document.body.classList.toggle("v30-user",!a);document.querySelectorAll(".v30-admin-only").forEach(e=>e.style.display=a?"":"none");if(!a)document.getElementById("v27AdminPanel")?.classList.add("hidden");const n=document.getElementById("v30MarketNotice");if(n)n.innerHTML=a?'Modo administrador. <b>Actualiza y publica el catálogo</b> para que todos reciban los mismos precios. <button class="help-btn" data-help="prices" type="button">?</button>':'Usa esta app como práctica. <b>Los precios compartidos son administrados por Inversor Fácil.</b> Tu simulación no compra ni vende dinero real. <button class="help-btn" data-help="prices" type="button">?</button>'};function layout(){const w=matchMedia("(min-width:900px)").matches;document.body.classList.toggle("v30-wide",w);const app=document.querySelector(".app"),l=document.getElementById("v30DesktopLeft"),r=document.getElementById("v30DesktopRight");if(!app||!l||!r)return;const h=document.querySelector(".app > header,#v30DesktopLeft > header"),n=document.querySelector(".app > .notice,#v30DesktopLeft > .notice"),t=document.getElementById("v27TopStrip"),m=document.querySelector(".app > section.grid.grid4,#v30DesktopRight > section.grid.grid4");if(w){if(h)l.appendChild(h);if(n)l.appendChild(n);if(t)r.appendChild(t);if(m)r.appendChild(m)}else{const a=document.getElementById("helpBackdrop");if(h)app.insertBefore(h,a.nextSibling);if(n)app.insertBefore(n,h.nextSibling);const mob=document.getElementById("v26MobileNav");if(t)app.insertBefore(t,mob);if(m)app.insertBefore(m,mob)}}async function sync(force=false){if(typeof v27LoadSharedCatalog!=="function")return;const now=Date.now();if(!force&&now-last<60000)return;last=now;try{await v27LoadSharedCatalog()}catch(e){}}setInterval(()=>sync(false),300000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")sync(false)});addEventListener("focus",()=>sync(false));addEventListener("resize",layout);document.addEventListener("DOMContentLoaded",()=>{layout();setTimeout(()=>{v30ApplyPermissions();sync(true)},700);setTimeout(v30ApplyPermissions,1800)})})();
+(function(){let last=0;window.v30ApplyPermissions=function(){const a=(()=>{try{return typeof v27IsAdmin==="function"&&v27IsAdmin()}catch(e){return false}})();document.body.classList.toggle("v30-admin",a);document.body.classList.toggle("v30-user",!a);document.querySelectorAll(".v30-admin-only").forEach(e=>e.style.display=a?"":"none");if(!a)document.getElementById("v27AdminPanel")?.classList.add("hidden");const n=document.getElementById("v30MarketNotice");if(n)n.innerHTML=a?'Modo administrador. <b>Actualiza y publica el catálogo</b> para que todos reciban los mismos precios. <button class="help-btn" data-help="prices" type="button">?</button>':'Usa esta app como práctica. <b>Los precios compartidos son administrados por Inversor Fácil.</b> Tu simulación no compra ni vende dinero real. <button class="help-btn" data-help="prices" type="button">?</button>'};function layout(){const w=matchMedia("(min-width:900px)").matches;document.body.classList.toggle("v30-wide",w);const app=document.querySelector(".app"),l=document.getElementById("v30DesktopLeft"),r=document.getElementById("v30DesktopRight");if(!app||!l||!r)return;const h=document.querySelector(".app > header,#v30DesktopLeft > header"),n=document.querySelector(".app > .notice,#v30DesktopLeft > .notice"),t=document.getElementById("v27TopStrip"),m=document.querySelector(".app > section.grid.grid4,#v30DesktopRight > section.grid.grid4");if(w){if(h)l.appendChild(h);if(n)l.appendChild(n);if(t)r.appendChild(t);if(m)r.appendChild(m)}else{const a=document.getElementById("helpBackdrop");if(h)app.insertBefore(h,a.nextSibling);if(n)app.insertBefore(n,h.nextSibling);const mob=document.getElementById("v26MobileNav");if(t)app.insertBefore(t,mob);if(m)app.insertBefore(m,mob)}}async function sync(force=false){if(typeof v27LoadSharedCatalog!=="function")return;const now=Date.now();if(!force&&now-last<60000)return;last=now;try{await v27LoadSharedCatalog()}catch(e){}}/* V51: sincronización V30 delegada al motor central */addEventListener("resize",layout);document.addEventListener("DOMContentLoaded",()=>{layout();setTimeout(()=>{v30ApplyPermissions();sync(true)},700);setTimeout(v30ApplyPermissions,1800)})})();
 </script>
-<script>(function(){const PAGE=30,states=new WeakMap();function items(c){if(!c)return[];if(c.id==='top500Rows')return[...c.children].filter(x=>x.tagName==='TR'&&!x.querySelector('.empty'));if(c.id==='assetGrid'||c.id==='radarResults')return[...c.children].filter(x=>!x.classList.contains('empty'));return[...c.children].filter(x=>x.tagName==='TR'&&!x.querySelector('.empty'))}function go(c){const a=items(c),pages=Math.max(1,Math.ceil(a.length/PAGE));let st=states.get(c)||{page:1};st.page=Math.min(st.page,pages);states.set(c,st);a.forEach((e,i)=>e.style.display=(Math.floor(i/PAGE)+1===st.page)?'':'none');const host=c.id==='top500Rows'?(c.closest('.top500-table-wrap')||c.closest('table')):c;if(!host)return;let nav=host.parentElement&&host.parentElement.querySelector('.v32-pagination[data-for="'+c.id+'"]');if(a.length<=PAGE){if(nav)nav.remove();return}if(!nav){nav=document.createElement('div');nav.className='v32-pagination';nav.dataset.for=c.id;host.insertAdjacentElement('afterend',nav)}const lo=Math.max(1,st.page-2),hi=Math.min(pages,lo+4);let h='<button data-p="prev">‹</button>';if(lo>1)h+='<button data-p="1">1</button>'+(lo>2?'<span>…</span>':'');for(let n=lo;n<=hi;n++)h+='<button data-p="'+n+'" class="'+(n===st.page?'active':'')+'">'+n+'</button>';if(hi<pages)h+=(hi<pages-1?'<span>…</span>':'')+'<button data-p="'+pages+'">'+pages+'</button>';h+='<button data-p="next">›</button><span class="v32-page-info">'+a.length+' resultados · 30 por página</span>';nav.innerHTML=h;nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{st.page=b.dataset.p==='prev'?Math.max(1,st.page-1):b.dataset.p==='next'?Math.min(pages,st.page+1):Number(b.dataset.p);go(c);host.scrollIntoView({behavior:'smooth',block:'start'})})}function apply(){['assetGrid','radarResults','top500Rows'].forEach(id=>{const e=document.getElementById(id);if(e)go(e)});document.querySelectorAll('#marketHistoryContent table tbody').forEach((e,i)=>{if(!e.id)e.id='v32HistoryBody'+i;go(e)})}let t;const o=new MutationObserver(()=>{clearTimeout(t);t=setTimeout(apply,100)});document.addEventListener('DOMContentLoaded',()=>{o.observe(document.body,{subtree:true,childList:true});setTimeout(apply,600)});window.v32Paginate=apply})();</script>
+<script>(function(){const PAGE=30,states=new WeakMap();function items(c){if(!c)return[];if(c.id==='top500Rows')return[...c.children].filter(x=>x.tagName==='TR'&&!x.querySelector('.empty'));if(c.id==='assetGrid'||c.id==='radarResults')return[...c.children].filter(x=>!x.classList.contains('empty'));return[...c.children].filter(x=>x.tagName==='TR'&&!x.querySelector('.empty'))}function go(c){const a=items(c),pages=Math.max(1,Math.ceil(a.length/PAGE));let st=states.get(c)||{page:1};st.page=Math.min(st.page,pages);states.set(c,st);a.forEach((e,i)=>e.style.display=(Math.floor(i/PAGE)+1===st.page)?'':'none');const host=c.id==='top500Rows'?(c.closest('.top500-table-wrap')||c.closest('table')):c;if(!host)return;let nav=host.parentElement&&host.parentElement.querySelector('.v32-pagination[data-for="'+c.id+'"]');if(a.length<=PAGE){if(nav)nav.remove();return}if(!nav){nav=document.createElement('div');nav.className='v32-pagination';nav.dataset.for=c.id;host.insertAdjacentElement('afterend',nav)}const lo=Math.max(1,st.page-2),hi=Math.min(pages,lo+4);let h='<button data-p="prev">‹</button>';if(lo>1)h+='<button data-p="1">1</button>'+(lo>2?'<span>…</span>':'');for(let n=lo;n<=hi;n++)h+='<button data-p="'+n+'" class="'+(n===st.page?'active':'')+'">'+n+'</button>';if(hi<pages)h+=(hi<pages-1?'<span>…</span>':'')+'<button data-p="'+pages+'">'+pages+'</button>';h+='<button data-p="next">›</button><span class="v32-page-info">'+a.length+' resultados · 30 por página</span>';nav.innerHTML=h;nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{st.page=b.dataset.p==='prev'?Math.max(1,st.page-1):b.dataset.p==='next'?Math.min(pages,st.page+1):Number(b.dataset.p);go(c);host.scrollIntoView({behavior:'smooth',block:'start'})})}function apply(){['assetGrid','radarResults'].forEach(id=>{const e=document.getElementById(id);if(e)go(e)});document.querySelectorAll('#marketHistoryContent table tbody').forEach((e,i)=>{if(!e.id)e.id='v32HistoryBody'+i;go(e)})}let t;const o=new MutationObserver(()=>{clearTimeout(t);t=setTimeout(apply,100)});document.addEventListener('DOMContentLoaded',()=>{['assetGrid','radarResults','marketHistoryContent'].forEach(id=>{const e=document.getElementById(id);if(e)o.observe(e,{subtree:true,childList:true})});setTimeout(apply,600)});window.v32Paginate=apply})();</script>
 
 <script>
 /* ===== V33 · Top 20, preferencias y controles Admin ===== */
@@ -6910,8 +6942,8 @@ document.addEventListener("DOMContentLoaded",()=>{
 
   // Los usuarios que dejan la app abierta reciben el catálogo actualizado
   // sin necesidad de cerrar sesión.
-  setInterval(v40SyncSharedCatalog,60000);
-  window.addEventListener("focus",v40SyncSharedCatalog);
+  window.v51LegacyCatalogSync=v40SyncSharedCatalog;
+  /* V51: sin interval/focus duplicados; el motor central programa el catálogo. */
 })();
 </script>
 
@@ -8199,7 +8231,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   const oldShow=window.showTab;
   window.showTab=function(name){if(name!=='trading')return oldShow(name);['dashboard','portfolio','explore','marketHistory','externalRadar','top500','trading','compare','backtest','goals','builder','academy','settings'].forEach(t=>{const sec=document.getElementById('tab-'+t);if(sec)sec.classList.toggle('hidden',t!==name);const b=document.querySelector(`.tab[data-tab="${t}"]`);if(b)b.classList.toggle('active',t===name)});try{mountV23MarketStage(name)}catch(e){};setTimeout(()=>{render();scan()},50)};
 
-  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{mount();document.querySelectorAll('.tab[data-tab="trading"]').forEach(b=>{const clone=b.cloneNode(true);b.replaceWith(clone);clone.addEventListener('click',()=>window.showTab('trading'))});const mob=document.querySelector('[data-v26-tab="trading"]');if(mob){const clone=mob.cloneNode(true);mob.replaceWith(clone);clone.addEventListener('click',()=>window.showTab('trading'))}},3000);LIVE.timer=setInterval(scan,300000)});
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{mount();document.querySelectorAll('.tab[data-tab="trading"]').forEach(b=>{const clone=b.cloneNode(true);b.replaceWith(clone);clone.addEventListener('click',()=>window.showTab('trading'))});const mob=document.querySelector('[data-v26-tab="trading"]');if(mob){const clone=mob.cloneNode(true);mob.replaceWith(clone);clone.addEventListener('click',()=>window.showTab('trading'))}},3000);LIVE.timer=null});
   window.v47Trading={scan,render,universe,priority,state:LIVE};
 })();
 </script>
@@ -8432,15 +8464,11 @@ document.addEventListener("DOMContentLoaded",()=>{
     const b=e.target.closest?.('[data-tab="top500"],[data-v26-tab="top500"],[data-v44-tab="top500"]');
     if(b)setTimeout(()=>loadShared(true),120);
   });
-  document.addEventListener("visibilitychange",()=>{
-    if(document.visibilityState==="visible" && Date.now()-lastCloudAt>60000)loadShared(false);
-  });
-  window.addEventListener("focus",()=>{
-    if(Date.now()-lastCloudAt>60000)loadShared(false);
-  });
-  setInterval(()=>loadShared(false),120000);
+  window.v51LoadSharedTop500=loadShared;
+  /* V51: visibility/focus/interval del Top 500 quedan a cargo del motor central. */
 })();
 </script>
 
+<script src="assets/v51-sync-engine.js?v=51"></script>
 </body>
 </html>
