@@ -1,0 +1,39 @@
+name: V51 Frontend performance and ordered sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v51-performance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate V51 JavaScript
+        run: node --check assets/v51-sync-engine.js
+
+      - name: Apply V51 frontend patch
+        run: python .github/scripts/v51_performance_patch.py
+
+      - name: Verify V51 integration
+        run: |
+          grep -q 'assets/v51-performance.css?v=51' index.html
+          grep -q 'assets/v51-sync-engine.js?v=51' index.html
+          grep -q 'v51Top500Pagination' index.html
+          grep -q 'V51: sincronización V30 delegada' index.html
+
+      - name: Commit optimized frontend
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "V51 optimize frontend sync and rendering [skip ci]"
+          git push
