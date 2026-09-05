@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Análisis 360° · Inversor Fácil</title>
+<link rel="stylesheet" href="assets/analysis.css?v=55">
+</head>
+<body>
+<main class="analysis-shell">
+  <div class="analysis-topbar">
+    <a class="brand" href="./" aria-label="Volver a Inversor Fácil">
+      <span class="brand-mark">IF</span>
+      <span>Inversor Fácil<small>Análisis 360° dinámico</small></span>
+    </a>
+    <span id="sourceChip" class="chip optional">Datos guardados</span>
+    <span id="freshChip" class="chip warn">Comprobando actualización…</span>
+    <span class="spacer"></span>
+    <button id="refreshBtn" class="btn primary" type="button">↻ Actualizar análisis</button>
+    <a class="btn ghost" href="./">← Catálogo</a>
+  </div>
+
+  <div id="loadingBar" class="loading-line"></div>
+  <div id="globalMessage" class="notice" style="display:none;margin:10px 0"></div>
+
+  <section class="hero">
+    <article class="panel">
+      <div class="hero-main">
+        <div>
+          <div class="eyebrow" id="assetTypeLabel">Activo</div>
+          <h1 class="asset-title" id="assetName">Cargando…</h1>
+          <div class="asset-meta" id="assetMeta">—</div>
+        </div>
+        <div>
+          <div class="price" id="assetPrice">—</div>
+          <div class="change neutral" id="assetChange">—</div>
+        </div>
+      </div>
+      <div class="hero-summary" id="diagnosticText">Preparando el análisis con los datos disponibles.</div>
+    </article>
+
+    <aside class="panel hero-side">
+      <div class="metric"><span>Hoy</span><strong id="mDay">—</strong><small>cierre/último precio</small></div>
+      <div class="metric"><span>5 sesiones</span><strong id="mWeek">—</strong><small>momentum corto</small></div>
+      <div class="metric"><span>1 mes</span><strong id="mMonth">—</strong><small>~21 sesiones</small></div>
+      <div class="metric"><span>1 año</span><strong id="mYear">—</strong><small>~252 sesiones</small></div>
+      <div class="metric"><span>Máximo 52s</span><strong id="mHigh52">—</strong><small id="mHigh52Sub">—</small></div>
+      <div class="metric"><span>Mínimo 52s</span><strong id="mLow52">—</strong><small id="mLow52Sub">—</small></div>
+    </aside>
+  </section>
+
+  <nav class="tabs" aria-label="Secciones de análisis">
+    <button class="tab active" type="button" data-tab="summary">Resumen</button>
+    <button class="tab" type="button" data-tab="business">Negocio</button>
+    <button class="tab" type="button" data-tab="price">Precio</button>
+    <button class="tab" type="button" data-tab="probability">Probabilidad</button>
+    <button class="tab" type="button" data-tab="risk">Riesgos</button>
+    <button class="tab" type="button" data-tab="sources">Fuentes</button>
+  </nav>
+
+  <section class="tab-panel active" data-panel="summary">
+    <div class="section-grid">
+      <article class="panel span-6">
+        <div class="section-title"><div><div class="kicker">Diagnóstico</div><h2>Score del activo</h2></div><p>No es una orden de compra o venta.</p></div>
+        <div class="score-wrap">
+          <div class="score-circle" id="scoreCircle" style="--score:0%"><strong id="scoreValue">—</strong><small>/100</small></div>
+          <div class="score-text"><span class="score-label" id="scoreLabel">Sin clasificar</span><p id="scoreExplanation">Se calculará cuando exista historial suficiente.</p></div>
+        </div>
+      </article>
+      <article class="panel span-6">
+        <div class="section-title"><div><div class="kicker">Componentes</div><h2>Qué está impulsando el score</h2></div></div>
+        <div class="factor-list" id="factorList"><div class="empty">Calculando factores…</div></div>
+      </article>
+      <article class="panel span-6">
+        <div class="section-title"><div><div class="kicker">Positivo</div><h2>Señales favorables</h2></div></div>
+        <div class="signal-list" id="positiveSignals"><div class="empty">Sin señales calculadas todavía.</div></div>
+      </article>
+      <article class="panel span-6">
+        <div class="section-title"><div><div class="kicker">Precaución</div><h2>Riesgos visibles</h2></div></div>
+        <div class="signal-list" id="negativeSignals"><div class="empty">Sin riesgos calculados todavía.</div></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="business">
+    <div class="section-grid">
+      <article class="panel span-8">
+        <div class="section-title"><div><div class="kicker">Perfil</div><h2 id="businessTitle">Negocio / composición</h2></div></div>
+        <div class="description" id="businessDescription"><p>Esperando perfil de la fuente de datos.</p></div>
+      </article>
+      <article class="panel span-4">
+        <div class="section-title"><div><div class="kicker">Identidad</div><h2>Datos básicos</h2></div></div>
+        <div class="signal-list" id="identityList"><div class="empty">—</div></div>
+      </article>
+      <article class="panel span-12">
+        <div class="notice">Los estados financieros detallados (ventas, deuda, flujo de caja y márgenes) no se inventan. Si el plan/API disponible no los entrega, la página lo indicará como dato pendiente en vez de estimarlo.</div>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="price">
+    <div class="section-grid">
+      <article class="panel span-12">
+        <div class="section-title"><div><div class="kicker">Histórico</div><h2>Precio y tendencia</h2></div><p id="historyCoverage">—</p></div>
+        <div class="chart-wrap"><svg id="priceChart" class="chart" viewBox="0 0 1000 280" role="img" aria-label="Histórico de precio"></svg><div class="chart-legend" id="chartLegend"></div></div>
+      </article>
+      <article class="panel span-12">
+        <div class="stats-grid">
+          <div class="stat"><span>Volatilidad anualizada</span><strong id="sVol">—</strong><small>desviación histórica</small></div>
+          <div class="stat"><span>Drawdown actual</span><strong id="sDrawdown">—</strong><small>desde máximo 52 semanas</small></div>
+          <div class="stat"><span>RSI 14</span><strong id="sRsi">—</strong><small>variable, no señal automática</small></div>
+          <div class="stat"><span>Volumen relativo</span><strong id="sRelVol">—</strong><small>vs promedio 20 sesiones</small></div>
+          <div class="stat"><span>Media 20</span><strong id="sMa20">—</strong><small>precio vs media</small></div>
+          <div class="stat"><span>Media 50</span><strong id="sMa50">—</strong><small>precio vs media</small></div>
+          <div class="stat"><span>Media 200</span><strong id="sMa200">—</strong><small>tendencia larga</small></div>
+          <div class="stat"><span>Máximo drawdown</span><strong id="sMaxDd">—</strong><small>en histórico disponible</small></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="probability">
+    <div class="section-grid">
+      <article class="panel span-12">
+        <div class="section-title"><div><div class="kicker">Patrón histórico</div><h2>Probabilidad condicional</h2></div><p id="probCases">—</p></div>
+        <div class="prob-grid" id="probGrid"><div class="empty">Esperando histórico suficiente.</div></div>
+      </article>
+      <article class="panel span-8">
+        <div class="section-title"><div><div class="kicker">Próximas sesiones</div><h2>Ventana tentativa</h2></div><p>No predice una fecha exacta.</p></div>
+        <div class="timeline" id="probTimeline"><div class="empty">—</div></div>
+      </article>
+      <article class="panel span-4">
+        <div class="section-title"><div><div class="kicker">Movimiento fuerte</div><h2>Umbral propio</h2></div></div>
+        <div class="stats-grid" style="grid-template-columns:1fr 1fr">
+          <div class="stat"><span>Umbral 95%</span><strong id="strongThreshold">—</strong><small>movimiento diario</small></div>
+          <div class="stat"><span>Edge 1D</span><strong id="probEdge">—</strong><small>vs probabilidad base</small></div>
+          <div class="stat"><span>Alza fuerte</span><strong id="strongUp">—</strong><small>casos similares</small></div>
+          <div class="stat"><span>Baja fuerte</span><strong id="strongDown">—</strong><small>casos similares</small></div>
+        </div>
+      </article>
+      <article class="panel span-12"><div class="notice">La estadística responde: “cuando este activo se pareció a su estado actual, ¿qué ocurrió después?”. No es certeza ni recomendación. Cuantos más casos comparables existan, más útil es la lectura.</div></article>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="risk">
+    <div class="section-grid">
+      <article class="panel span-6"><div class="section-title"><div><div class="kicker">Riesgo</div><h2>Alertas cuantitativas</h2></div></div><div class="signal-list" id="riskSignals"><div class="empty">Calculando…</div></div></article>
+      <article class="panel span-6"><div class="section-title"><div><div class="kicker">Lectura</div><h2>Qué vigilar</h2></div></div><div class="description" id="riskNarrative"><p>—</p></div></article>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="sources">
+    <div class="section-grid">
+      <article class="panel span-12"><div class="section-title"><div><div class="kicker">Trazabilidad</div><h2>Fuentes utilizadas</h2></div><p id="lastUpdated">—</p></div><div class="source-list" id="sourceList"></div></article>
+      <article class="panel span-12"><div class="notice">El análisis distingue datos actuales, datos guardados y cálculos derivados. Si una fuente falla o tu plan no permite un endpoint, esa sección queda marcada como no disponible.</div></article>
+    </div>
+  </section>
+
+  <div class="footer-note">Inversor Fácil · Herramienta educativa. Las probabilidades se calculan con datos históricos disponibles y no garantizan rendimientos futuros.</div>
+</main>
+<script src="assets/analysis.js?v=55"></script>
+</body>
+</html>
