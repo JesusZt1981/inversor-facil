@@ -1,0 +1,47 @@
+name: V55 wire financial panel
+
+on:
+  push:
+    paths:
+      - '.github/workflows/v55-financials-inject.yml'
+      - 'assets/v55-financials.js'
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add financial script to analysis page
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('analisis.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/v55-financials.js?v=55"></script>'
+          if tag not in s:
+              if '</body>' not in s:
+                  raise SystemExit('analisis.html has no </body>')
+              s=s.replace('</body>',tag+'\n</body>',1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate JS syntax
+        run: |
+          node --check assets/analysis.js
+          node --check assets/v55-analysis-launcher.js
+          node --check assets/v55-financials.js
+      - name: Commit analysis integration
+        shell: bash
+        run: |
+          if git diff --quiet -- analisis.html; then
+            echo "Financial panel already wired"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add analisis.html
+          git commit -m "V55 connect SEC financial panel [skip ci]"
+          git push
