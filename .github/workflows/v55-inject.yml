@@ -1,0 +1,45 @@
+name: V55 wire dynamic analysis
+
+on:
+  push:
+    paths:
+      - '.github/workflows/v55-inject.yml'
+      - 'analisis.html'
+      - 'assets/analysis.js'
+      - 'assets/analysis.css'
+      - 'assets/v55-analysis-launcher.js'
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add launcher to index
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/v55-analysis-launcher.js?v=55"></script>'
+          if tag not in s:
+              if '</body>' not in s:
+                  raise SystemExit('index.html has no </body>')
+              s=s.replace('</body>', tag+'\n</body>', 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit index integration
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "Launcher already wired"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "V55 connect Analyze 360 to catalog [skip ci]"
+          git push
