@@ -6,7 +6,7 @@ const URL=process.env.SUPABASE_URL||'';
 const SERVICE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY||'';
 const BREVO_API_KEY=process.env.BREVO_API_KEY||'';
 const SENDER_EMAIL=process.env.BREVO_SENDER_EMAIL||process.env.MAIL_FROM||'';
-const SENDER_NAME=process.env.BREVO_SENDER_NAME||'Mis Finanzas';
+const SENDER_NAME=process.env.BREVO_SENDER_NAME||'Mis finanzas';
 
 const db=()=>createClient(URL,SERVICE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 const money=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n||0));
@@ -55,9 +55,9 @@ async function probeBrevo(){
 function mailFor(kind,s,card){
   const due=s.due_date,amount=remaining(s),name=card.name||'Tarjeta',last4=card.last4?` •••• ${card.last4}`:'';
   const title=kind==='cutoff'?'Ya cerró tu tarjeta':kind==='due_5'?'Tu pago vence en 5 días':kind==='due_1'?'Tu pago vence mañana':'Tu pago vence hoy';
-  const source=s.statement_amount==null?'Importe estimado con los movimientos registrados en Mis Finanzas.':'Importe tomado del estado de cuenta capturado en Mis Finanzas.';
+  const source=s.statement_amount==null?'Importe estimado con los movimientos registrados en Mis finanzas.':'Importe tomado del estado de cuenta capturado en Mis finanzas.';
   return {
-    subject:`Mis Finanzas · ${title} · ${name}`,
+    subject:`Mis finanzas · ${title} · ${name}`,
     htmlContent:`<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;padding:24px;color:#172033"><h2 style="margin:0 0 18px">${esc(title)}</h2><p><b>${esc(name+last4)}</b></p><p style="font-size:32px;font-weight:700;margin:18px 0">${esc(money(amount))}</p><p>Pago pendiente para evitar intereses según el registro actual.</p><p><b>Fecha límite:</b> ${esc(due)}</p><p><b>Corte:</b> ${esc(s.period_end)}</p><p style="font-size:13px;color:#667085">${esc(source)}</p><p style="font-size:13px;color:#667085">Si ya registraste el pago completo, no volverás a recibir avisos de este corte.</p></div>`
   };
 }
