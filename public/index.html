@@ -3,160 +3,107 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f6f8">
+  <meta name="theme-color" content="#eef1f3">
   <title>Mis finanzas</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body data-theme="light">
-  <div id="toast" class="toast" aria-live="polite"></div>
+<body data-theme="steel">
+<div id="toast" class="toast" aria-live="polite"></div>
 
-  <section id="authView" class="auth-shell">
-    <div class="auth-card">
-      <div class="brand-mark">$</div>
-      <h1>Mis finanzas</h1>
-      <p>Controla ingresos, gastos y tarjetas en un solo lugar.</p>
-      <label>Correo electrónico<input id="authEmail" type="email" autocomplete="email" placeholder="tu@correo.com"></label>
-      <label>Contraseña<input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 8 caracteres"></label>
-      <button class="btn primary" id="loginBtn">Entrar</button>
-      <button class="btn ghost" id="signupBtn">Crear mi cuenta</button>
-      <small id="authHelp">Tus datos quedan guardados de forma privada.</small>
-    </div>
-  </section>
-
-  <div id="appView" class="app hidden">
-    <header class="topbar shell-card">
-      <div class="brand-line">
-        <div class="brand-mini">$</div>
-        <div><div class="eyebrow">CONTROL PERSONAL</div><h1>Mis finanzas</h1></div>
-      </div>
-      <div class="top-actions">
-        <button class="theme-switch" id="themeSwitch" type="button" title="Cambiar tema">🌙 <span>Oscuro</span></button>
-        <button class="icon-btn" id="logoutBtn" title="Cerrar sesión">↪</button>
-      </div>
-    </header>
-
-    <main>
-      <section class="screen active" data-screen="home">
-        <div class="month-strip shell-card">
-          <div><span>Resumen del mes</span><strong id="monthLabel">—</strong></div>
-          <button class="mini-btn" id="refreshBtn">↻ Actualizar</button>
-        </div>
-
-        <div class="kpi-grid">
-          <article class="kpi income"><span>INGRESOS</span><strong id="kIncome">$0</strong><small>Entradas del mes</small></article>
-          <article class="kpi expense"><span>GASTOS</span><strong id="kExpense">$0</strong><small>Salidas del mes</small></article>
-          <article class="kpi balance"><span>BALANCE</span><strong id="kBalance">$0</strong><small>Ingresos menos gastos</small></article>
-        </div>
-
-        <div class="quick-grid">
-          <button class="big-action expense-action" id="newExpenseBtn"><span class="plus">−</span><span><b>Agregar gasto</b><small>Efectivo, débito, crédito o transferencia</small></span></button>
-          <button class="big-action income-action" id="newIncomeBtn"><span class="plus">+</span><span><b>Agregar ingreso</b><small>Sueldo, venta, depósito, etc.</small></span></button>
-        </div>
-
-        <section class="panel">
-          <div class="section-title"><div><span>⏰</span><h2>Próximos pagos</h2></div><button data-go="cards">Ver tarjetas</button></div>
-          <div id="upcomingList" class="stack-list empty-state">No hay pagos pendientes.</div>
-        </section>
-
-        <section class="panel">
-          <div class="section-title"><div><span>💳</span><h2>Compras del corte actual</h2></div></div>
-          <div id="cycleList" class="stack-list empty-state">Agrega una tarjeta para comenzar.</div>
-        </section>
-
-        <section class="panel">
-          <div class="section-title"><div><span>📊</span><h2>¿En qué se gastó?</h2></div></div>
-          <div id="categoryBars" class="category-bars empty-state">Todavía no hay gastos este mes.</div>
-        </section>
-      </section>
-
-      <section class="screen" data-screen="transactions">
-        <div class="page-head shell-card">
-          <div><span class="eyebrow">HISTORIAL</span><h2>Movimientos</h2><p>Vista tipo hoja de cálculo, separada por gastos e ingresos.</p></div>
-          <button class="round-add" id="newTxBtn" title="Agregar movimiento">+</button>
-        </div>
-
-        <div class="movement-toolbar shell-card">
-          <div class="view-switch" role="tablist" aria-label="Tipo de movimiento">
-            <button id="showExpensesBtn" class="active expense-tab" type="button">Gastos</button>
-            <button id="showIncomeBtn" class="income-tab" type="button">Ingresos</button>
-          </div>
-          <div class="filter-row"><input id="monthFilter" type="month"><button class="btn small" id="applyFilter">Ver mes</button></div>
-        </div>
-
-        <section class="sheet-card">
-          <div class="sheet-head">
-            <div><span class="sheet-label" id="movementSheetLabel">GASTOS DEL MES</span><h3 id="movementSheetTitle">Tabla de gastos</h3></div>
-            <div class="sheet-total"><span>Total</span><strong id="movementTotal">$0.00</strong></div>
-          </div>
-          <div class="sheet-scroll">
-            <table class="finance-sheet">
-              <thead><tr><th>FECHA</th><th>CONCEPTO</th><th>CATEGORÍA</th><th>MÉTODO</th><th class="num">IMPORTE</th><th class="actions-col">ACCIONES</th></tr></thead>
-              <tbody id="transactionsList"><tr><td colspan="6" class="empty-cell">Sin movimientos.</td></tr></tbody>
-              <tfoot><tr><td colspan="4">TOTAL <span id="movementCount">0 movimientos</span></td><td class="num" id="movementTotalFooter">$0.00</td><td></td></tr></tfoot>
-            </table>
-          </div>
-        </section>
-
-        <section class="sheet-card balance-sheet">
-          <div class="sheet-head"><div><span class="sheet-label">RESULTADO DEL MES</span><h3>Ingresos menos gastos</h3></div></div>
-          <div class="summary-grid-table">
-            <div class="summary-cell income"><span>Ingresos</span><strong id="summaryIncome">$0.00</strong></div>
-            <div class="summary-cell expense"><span>Gastos</span><strong id="summaryExpense">$0.00</strong></div>
-            <div class="summary-cell balance"><span>Balance</span><strong id="summaryBalance">$0.00</strong></div>
-          </div>
-        </section>
-      </section>
-
-      <section class="screen" data-screen="cards">
-        <div class="page-head shell-card"><div><span class="eyebrow">TARJETAS</span><h2>Tarjetas de crédito</h2><p>Control de cortes, pagos y compras.</p></div><button class="round-add" id="newCardBtn">+</button></div>
-        <div class="info-banner">Cada tarjeta puede tener su propio día de corte y fecha límite de pago.</div>
-        <div id="cardsList" class="cards-grid"><div class="empty-state">Aún no hay tarjetas.</div></div>
-        <section class="panel statements-panel"><div class="section-title"><div><span>🧾</span><h2>Estados de cuenta</h2></div></div><div id="statementsList" class="stack-list empty-state">Sin estados de cuenta.</div></section>
-      </section>
-
-      <section class="screen" data-screen="settings">
-        <div class="page-head shell-card"><div><span class="eyebrow">CONFIGURACIÓN</span><h2>Avisos por correo</h2><p>Define dónde quieres recibir recordatorios.</p></div></div>
-        <div class="panel settings-card">
-          <label>Correo para recordatorios<input id="notificationEmail" type="email" placeholder="correo@ejemplo.com"></label>
-          <label class="toggle-row"><span><b>Enviar recordatorios</b><small>Corte, 5 días antes, un día antes y fecha límite.</small></span><input id="emailNotifications" type="checkbox" checked></label>
-          <button class="btn primary" id="saveSettingsBtn">Guardar configuración</button>
-        </div>
-      </section>
-    </main>
-
-    <nav class="bottom-nav">
-      <button class="active" data-go="home"><span>⌂</span>Inicio</button>
-      <button data-go="transactions"><span>☷</span>Movimientos</button>
-      <button data-go="cards"><span>▣</span>Tarjetas</button>
-      <button data-go="settings"><span>⚙</span>Ajustes</button>
-    </nav>
+<section id="authView" class="auth-shell">
+  <div class="auth-card">
+    <div class="brand-mark">$</div>
+    <h1>Mis finanzas</h1>
+    <p>Control claro de ingresos, gastos, deudas y pagos.</p>
+    <label>Correo electrónico<input id="authEmail" type="email" autocomplete="email" placeholder="tu@correo.com"></label>
+    <label>Contraseña<input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 8 caracteres"></label>
+    <button class="btn primary" id="loginBtn">Entrar</button>
+    <button class="btn ghost" id="signupBtn">Crear mi cuenta</button>
+    <small>Tus datos quedan guardados de forma privada.</small>
   </div>
+</section>
 
-  <dialog id="txDialog" class="modal">
-    <form method="dialog" id="txForm">
-      <div class="modal-head"><div><span class="eyebrow" id="txEyebrow">NUEVO</span><h2 id="txTitle">Agregar gasto</h2></div><button class="close" value="cancel">×</button></div>
-      <input type="hidden" id="txId"><input type="hidden" id="txType" value="expense">
-      <div class="form-grid">
-        <label>Fecha<input id="txDate" type="date" required></label>
-        <label>Concepto<input id="txDescription" maxlength="160" placeholder="Ej. Supermercado" required></label>
-        <label>Categoría<select id="txCategory"></select></label>
-        <label>Importe<input id="txAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required></label>
-        <label id="paymentMethodWrap">¿Cómo se pagó?<select id="txPaymentMethod"><option value="cash">Efectivo</option><option value="debit">Tarjeta de débito</option><option value="credit">Tarjeta de crédito</option><option value="transfer">Transferencia</option></select></label>
-        <label id="cardWrap" class="hidden">Tarjeta<select id="txCard"></select></label>
-        <label class="wide">Nota opcional<textarea id="txNotes" rows="2" placeholder="Algo que quieras recordar"></textarea></label>
-        <label class="wide receipt-label" id="receiptWrap"><span>📷 Foto del ticket <small>(opcional)</small></span><input id="txReceipt" type="file" accept="image/*" capture="environment"><img id="receiptPreview" class="receipt-preview hidden" alt="Vista previa del ticket"></label>
+<div id="appView" class="app hidden">
+  <header class="topbar">
+    <div class="brand-line"><div class="brand-mini">$</div><div><span>CONTROL PERSONAL</span><h1>Mis finanzas</h1></div></div>
+    <div class="top-actions">
+      <select id="themeSelect" class="theme-select" aria-label="Tema">
+        <option value="light">Claro</option><option value="dark">Oscuro</option><option value="graphite">Grafito</option><option value="olive">Olivo</option><option value="steel">Acero</option>
+      </select>
+      <button class="icon-btn" id="logoutBtn" title="Cerrar sesión">↪</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="screen active" data-screen="home">
+      <div class="page-title-row"><div><span class="eyebrow">RESUMEN</span><h2>Tu dinero este mes</h2></div><button class="mini-btn" id="refreshBtn">↻ Actualizar</button></div>
+      <div class="kpi-grid">
+        <article class="kpi"><span>INGRESOS</span><strong id="kIncome">$0</strong></article>
+        <article class="kpi"><span>GASTOS</span><strong id="kExpense">$0</strong></article>
+        <article class="kpi accent"><span>BALANCE</span><strong id="kBalance">$0</strong></article>
+        <article class="kpi"><span>PAGOS PENDIENTES</span><strong id="kPending">$0</strong></article>
       </div>
-      <button type="button" class="btn primary" id="saveTxBtn">Guardar</button>
-    </form>
-  </dialog>
+      <div class="quick-grid"><button class="quick expense" id="newExpenseBtn">− <span>Agregar gasto</span></button><button class="quick income" id="newIncomeBtn">+ <span>Agregar ingreso</span></button></div>
+      <section class="sheet-card">
+        <div class="sheet-head"><div><span class="sheet-label">PRÓXIMOS</span><h3>Pagos programados</h3></div><button class="link-btn" data-go="obligations">Ver todos</button></div>
+        <div class="sheet-scroll"><table class="finance-sheet compact"><thead><tr><th>CONCEPTO</th><th>TIPO</th><th>VENCE</th><th class="num">PAGO</th><th class="num">SALDO</th></tr></thead><tbody id="homeObligations"><tr><td colspan="5" class="empty-cell">Sin pagos programados.</td></tr></tbody></table></div>
+      </section>
+      <section class="sheet-card">
+        <div class="sheet-head"><div><span class="sheet-label">DISTRIBUCIÓN</span><h3>Gastos por categoría</h3></div></div>
+        <div id="categoryBars" class="category-bars empty-state">Todavía no hay gastos este mes.</div>
+      </section>
+    </section>
 
-  <dialog id="cardDialog" class="modal"><form method="dialog" id="cardForm"><div class="modal-head"><div><span class="eyebrow">TARJETA</span><h2 id="cardTitle">Agregar tarjeta</h2></div><button class="close" value="cancel">×</button></div><input type="hidden" id="cardId"><div class="form-grid"><label>Nombre<input id="cardName" placeholder="Ej. BBVA Azul" required></label><label>Banco<input id="cardBank" placeholder="Ej. BBVA"></label><label>Últimos 4 dígitos<input id="cardLast4" inputmode="numeric" maxlength="4" placeholder="1234"></label><label>Límite de crédito<input id="cardLimit" type="number" min="0" step="0.01" placeholder="Opcional"></label><label>Día de corte<input id="cardCutoff" type="number" min="1" max="28" value="15" required></label><label>Día límite de pago<input id="cardPayment" type="number" min="1" max="28" value="3" required></label></div><div class="tip">Configuración inicial recomendada: <b>corte 15</b> y <b>pago 3</b>.</div><button type="button" class="btn primary" id="saveCardBtn">Guardar tarjeta</button></form></dialog>
+    <section class="screen" data-screen="transactions">
+      <div class="page-head"><div><span class="eyebrow">MOVIMIENTOS</span><h2>Gastos e ingresos</h2></div><button class="round-add" id="newTxBtn">+</button></div>
+      <div class="toolbar"><div class="segmented"><button id="showExpensesBtn" class="active">Gastos</button><button id="showIncomeBtn">Ingresos</button></div><div class="filter-row"><input id="monthFilter" type="month"><button class="btn small" id="applyFilter">Ver mes</button></div></div>
+      <section class="sheet-card">
+        <div class="sheet-head"><div><span class="sheet-label" id="movementSheetLabel">GASTOS DEL MES</span><h3 id="movementSheetTitle">Tabla de gastos</h3></div><div class="sheet-total"><span>Total</span><strong id="movementTotal">$0.00</strong></div></div>
+        <div class="sheet-scroll"><table class="finance-sheet"><thead><tr><th>FECHA</th><th>CONCEPTO</th><th>CATEGORÍA</th><th>MÉTODO</th><th class="num">IMPORTE</th><th>ACCIONES</th></tr></thead><tbody id="transactionsList"></tbody><tfoot><tr><td colspan="4">TOTAL <span id="movementCount"></span></td><td class="num" id="movementTotalFooter">$0.00</td><td></td></tr></tfoot></table></div>
+      </section>
+      <section class="sheet-card"><div class="sheet-head"><div><span class="sheet-label">RESULTADO</span><h3>Ingresos menos gastos</h3></div></div><div class="summary-grid"><div><span>Ingresos</span><strong id="summaryIncome">$0</strong></div><div><span>Gastos</span><strong id="summaryExpense">$0</strong></div><div class="accent"><span>Balance</span><strong id="summaryBalance">$0</strong></div></div></section>
+    </section>
 
-  <dialog id="paymentDialog" class="modal compact-modal"><form method="dialog"><div class="modal-head"><div><span class="eyebrow">PAGO</span><h2 id="paymentTitle">Registrar pago</h2></div><button class="close" value="cancel">×</button></div><input type="hidden" id="statementId"><label>Importe pagado<input id="paymentAmount" type="number" min="0.01" step="0.01" required></label><label>Fecha del pago<input id="paymentDate" type="date" required></label><button type="button" class="btn primary" id="savePaymentBtn">Marcar pago</button></form></dialog>
+    <section class="screen" data-screen="obligations">
+      <div class="page-head"><div><span class="eyebrow">PAGOS Y DEUDAS</span><h2>Compromisos programados</h2><p>El saldo baja al registrar pagos y las deudas liquidadas salen de la tabla activa.</p></div><button class="round-add" id="newObligationBtn">+</button></div>
+      <div class="obligation-kpis"><div><span>Saldo de deudas</span><strong id="debtBalanceTotal">$0</strong></div><div><span>Pago próximo</span><strong id="nextPaymentTotal">$0</strong></div><div><span>Activos</span><strong id="activeObligationCount">0</strong></div></div>
+      <section class="sheet-card">
+        <div class="sheet-head"><div><span class="sheet-label">ACTIVOS</span><h3>Pagos pendientes</h3></div></div>
+        <div class="sheet-scroll"><table class="finance-sheet obligations-sheet"><thead><tr><th>CONCEPTO</th><th>TIPO</th><th>FRECUENCIA</th><th class="num">PAGO</th><th class="num">SALDO</th><th class="num">RESTANTES</th><th>PRÓXIMO</th><th>AVISOS</th><th>ACCIONES</th></tr></thead><tbody id="obligationsList"></tbody></table></div>
+      </section>
+      <section class="sheet-card">
+        <div class="sheet-head"><div><span class="sheet-label">HISTORIAL</span><h3>Deudas liquidadas</h3></div><button id="toggleCompletedBtn" class="link-btn">Mostrar</button></div>
+        <div id="completedWrap" class="hidden"><div class="sheet-scroll"><table class="finance-sheet"><thead><tr><th>CONCEPTO</th><th>MONTO INICIAL</th><th>TERMINADA</th></tr></thead><tbody id="completedList"></tbody></table></div></div>
+      </section>
+    </section>
 
-  <dialog id="amountDialog" class="modal compact-modal"><form method="dialog"><div class="modal-head"><div><span class="eyebrow">ESTADO DE CUENTA</span><h2>Monto exacto del banco</h2></div><button class="close" value="cancel">×</button></div><input type="hidden" id="amountStatementId"><p class="helper">Si el banco muestra un “pago para no generar intereses” diferente, escríbelo aquí.</p><label>Pago para no generar intereses<input id="statementAmount" type="number" min="0.01" step="0.01"></label><button type="button" class="btn primary" id="saveStatementAmountBtn">Guardar monto</button></form></dialog>
+    <section class="screen" data-screen="cards">
+      <div class="page-head"><div><span class="eyebrow">TARJETAS</span><h2>Tarjetas de crédito</h2></div><button class="round-add" id="newCardBtn">+</button></div>
+      <div id="cardsList" class="cards-grid"></div>
+      <section class="sheet-card"><div class="sheet-head"><div><span class="sheet-label">ESTADOS DE CUENTA</span><h3>Cortes pendientes</h3></div></div><div id="statementsList" class="stack-list"></div></section>
+    </section>
 
-  <script src="/app.js" defer></script>
-  <script src="/auth-recovery.js" defer></script>
-</body>
-</html>
+    <section class="screen" data-screen="settings">
+      <div class="page-head"><div><span class="eyebrow">AJUSTES</span><h2>Preferencias</h2></div></div>
+      <section class="settings-grid">
+        <div class="panel"><h3>Notificaciones</h3><label>Correo para recordatorios<input id="notificationEmail" type="email"></label><label class="check-row"><input id="emailNotifications" type="checkbox" checked><span>Enviar recordatorios por correo</span></label><button class="btn primary" id="saveSettingsBtn">Guardar</button></div>
+        <div class="panel"><h3>Tema visual</h3><p class="muted">Elige entre cinco estilos. Se conserva en este dispositivo y en tu cuenta.</p><div id="themeSwatches" class="theme-swatches"></div></div>
+      </section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav"><button class="active" data-go="home">⌂<span>Inicio</span></button><button data-go="transactions">☷<span>Movimientos</span></button><button data-go="obligations">▤<span>Pagos</span></button><button data-go="cards">▣<span>Tarjetas</span></button><button data-go="settings">⚙<span>Ajustes</span></button></nav>
+</div>
+
+<dialog id="txDialog" class="modal"><form method="dialog" id="txForm"><div class="modal-head"><h2 id="txTitle">Agregar gasto</h2><button class="close" value="cancel">×</button></div><input type="hidden" id="txId"><input type="hidden" id="txType"><div class="form-grid"><label>Fecha<input id="txDate" type="date"></label><label>Concepto<input id="txDescription"></label><label>Categoría<select id="txCategory"></select></label><label>Importe<input id="txAmount" type="number" step="0.01"></label><label id="paymentMethodWrap">Método<select id="txPaymentMethod"><option value="cash">Efectivo</option><option value="debit">Débito</option><option value="credit">Crédito</option><option value="transfer">Transferencia</option></select></label><label id="cardWrap" class="hidden">Tarjeta<select id="txCard"></select></label><label class="wide">Nota<textarea id="txNotes"></textarea></label><label class="wide" id="receiptWrap">Ticket<input id="txReceipt" type="file" accept="image/*"><img id="receiptPreview" class="receipt-preview hidden"></label></div><button type="button" class="btn primary" id="saveTxBtn">Guardar</button></form></dialog>
+
+<dialog id="obligationDialog" class="modal wide-modal"><form method="dialog"><div class="modal-head"><h2 id="obligationTitle">Nuevo pago programado</h2><button class="close" value="cancel">×</button></div><input type="hidden" id="obligationId"><div class="form-grid three"><label>Concepto<input id="obConcept" placeholder="Tanda, camioneta, Coppel..."></label><label>Categoría<input id="obCategory" value="Deudas"></label><label>Tipo<select id="obKind"><option value="debt">Deuda con fin</option><option value="recurring">Recurrente sin fin</option></select></label><label id="obInitialWrap">Deuda inicial<input id="obInitial" type="number" step="0.01"></label><label>Pago periódico<input id="obInstallment" type="number" step="0.01"></label><label>Próximo vencimiento<input id="obNextDue" type="date"></label><label>Frecuencia<select id="obFrequency"><option value="weekly">Semanal</option><option value="biweekly">Cada 15 días</option><option value="monthly">Mensual</option><option value="once">Una vez</option><option value="custom">Personalizada</option></select></label><label id="obIntervalWrap" class="hidden">Cada cuántos días<input id="obInterval" type="number" min="1"></label><label>Estado<select id="obStatus"><option value="active">Activo</option><option value="paused">Pausado</option></select></label><fieldset class="wide"><legend>Recordar días antes</legend><div class="checks"><label><input type="checkbox" name="remday" value="0"> mismo día</label><label><input type="checkbox" name="remday" value="1" checked> 1 día</label><label><input type="checkbox" name="remday" value="3"> 3 días</label><label><input type="checkbox" name="remday" value="5"> 5 días</label></div></fieldset><fieldset class="wide"><legend>Recordar por día de la semana</legend><div class="checks"><label><input type="checkbox" name="remweekday" value="5"> viernes</label><label><input type="checkbox" name="remweekday" value="0"> domingo</label></div></fieldset><label class="wide">Notas<textarea id="obNotes"></textarea></label></div><button type="button" class="btn primary" id="saveObligationBtn">Guardar pago programado</button></form></dialog>
+
+<dialog id="obligationPayDialog" class="modal compact-modal"><form method="dialog"><div class="modal-head"><h2>Registrar pago</h2><button class="close" value="cancel">×</button></div><input type="hidden" id="payObligationId"><label>Importe<input id="obPayAmount" type="number" step="0.01"></label><label>Fecha<input id="obPayDate" type="date"></label><label>Método<select id="obPayMethod"><option value="transfer">Transferencia</option><option value="debit">Débito</option><option value="cash">Efectivo</option></select></label><button type="button" class="btn primary" id="saveObligationPaymentBtn">Registrar y descontar saldo</button></form></dialog>
+
+<dialog id="cardDialog" class="modal"><form method="dialog"><div class="modal-head"><h2 id="cardTitle">Agregar tarjeta</h2><button class="close" value="cancel">×</button></div><input type="hidden" id="cardId"><div class="form-grid"><label>Nombre<input id="cardName"></label><label>Banco<input id="cardBank"></label><label>Últimos 4<input id="cardLast4" maxlength="4"></label><label>Límite<input id="cardLimit" type="number" step="0.01"></label><label>Día de corte<input id="cardCutoff" type="number" min="1" max="28" value="15"></label><label>Día límite<input id="cardPayment" type="number" min="1" max="28" value="3"></label></div><button type="button" class="btn primary" id="saveCardBtn">Guardar tarjeta</button></form></dialog>
+<dialog id="paymentDialog" class="modal compact-modal"><form method="dialog"><div class="modal-head"><h2>Registrar pago de tarjeta</h2><button class="close" value="cancel">×</button></div><input type="hidden" id="statementId"><label>Importe<input id="paymentAmount" type="number" step="0.01"></label><label>Fecha<input id="paymentDate" type="date"></label><button type="button" class="btn primary" id="savePaymentBtn">Guardar pago</button></form></dialog>
+<dialog id="amountDialog" class="modal compact-modal"><form method="dialog"><div class="modal-head"><h2>Monto del banco</h2><button class="close" value="cancel">×</button></div><input type="hidden" id="amountStatementId"><label>Pago para no generar intereses<input id="statementAmount" type="number" step="0.01"></label><button type="button" class="btn primary" id="saveStatementAmountBtn">Guardar monto</button></form></dialog>
+
+<script src="/app-v3.js" defer></script><script src="/auth-recovery.js" defer></script>
+</body></html>
