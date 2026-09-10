@@ -1,17 +1,20 @@
 {
-  "name": "mis-finanzas-proxy",
+  "name": "mis-finanzas",
   "version": "1.0.0",
   "private": true,
-  "description": "Public proxy for Mis finanzas.",
-  "main": "src/proxy.js",
+  "description": "Mis finanzas: control personal de ingresos, gastos, deudas y pagos.",
+  "main": "src/public.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/proxy.js"
+    "start": "node src/public.js",
+    "test": "node --test test/*.test.js"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.57.4",
+    "dotenv": "17.2.2",
     "express": "5.1.0"
   }
 }
