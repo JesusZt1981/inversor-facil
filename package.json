@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "Mis finanzas: control personal de ingresos, gastos, deudas y pagos.",
-  "main": "src/public.js",
+  "main": "src/entry.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/public.js",
+    "start": "node src/entry.js",
     "test": "node --test test/*.test.js"
   },
   "engines": {
