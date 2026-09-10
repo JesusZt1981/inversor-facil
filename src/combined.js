@@ -2,6 +2,7 @@
 const http=require('node:http');
 const {spawn}=require('node:child_process');
 const express=require('express');
+const {runReminders}=require('./reminderRunner');
 
 const PUBLIC_PORT=Number(process.env.PORT||10000);
 const APP_PORT=PUBLIC_PORT+1;
@@ -9,6 +10,7 @@ const MAIL_TOKEN=process.env.FINANCE_MAIL_TOKEN||'';
 const BREVO_API_KEY=process.env.BREVO_API_KEY||'';
 const SENDER_EMAIL=process.env.BREVO_SENDER_EMAIL||process.env.MAIL_FROM||'';
 const SENDER_NAME=process.env.BREVO_SENDER_NAME||'Mis Finanzas';
+const CRON_SECRET=process.env.CRON_SECRET||'';
 
 const child=spawn(process.execPath,['src/server.js'],{
   stdio:'inherit',
@@ -34,6 +36,17 @@ app.post('/internal/send-reminder-mail',express.json({limit:'256kb'}),async(req,
     if(!r.ok)return res.status(502).json({error:`Brevo ${r.status}`,detail:txt.slice(0,300)});
     res.json({ok:true});
   }catch(e){res.status(500).json({error:e.message})}
+});
+
+app.post('/api/reminders/run',express.json({limit:'64kb'}),async(req,res)=>{
+  try{
+    if(!CRON_SECRET||req.get('x-cron-secret')!==CRON_SECRET)return res.status(401).json({error:'No autorizado'});
+    const result=await runReminders({probe:req.body?.probe===true});
+    res.status(result.ok?200:207).json(result);
+  }catch(e){
+    console.error('FINANCE REMINDERS ERROR',e);
+    res.status(500).json({ok:false,error:e.message});
+  }
 });
 
 app.use((req,res)=>{
