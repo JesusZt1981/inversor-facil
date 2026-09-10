@@ -49,7 +49,7 @@ child.on('exit',code=>{console.error('Mis finanzas core exited',code);process.ex
 
 const app=express();
 app.disable('x-powered-by');
-app.use(express.json({limit:'32kb'}));
+app.use(express.json({limit:'10mb'}));
 
 app.post('/api/auth/signup',async(req,res)=>{
   const email=text(req.body?.email).toLowerCase();
@@ -146,12 +146,23 @@ app.post('/api/auth/reset-password',async(req,res)=>{
 
 app.use((req,res)=>{
   const headers={...req.headers,host:`127.0.0.1:${CORE_PORT}`};
+  delete headers['content-length'];
+  delete headers['transfer-encoding'];
+
+  let body=Buffer.alloc(0);
+  if(req.body!==undefined && req.method!=='GET' && req.method!=='HEAD'){
+    body=Buffer.from(JSON.stringify(req.body));
+    headers['content-type']='application/json';
+    headers['content-length']=String(body.length);
+  }
+
   const p=http.request({hostname:'127.0.0.1',port:CORE_PORT,path:req.originalUrl,method:req.method,headers},up=>{
     res.writeHead(up.statusCode||502,up.headers);
     up.pipe(res);
   });
   p.on('error',e=>res.status(502).json({error:'Aplicación interna no disponible',detail:e.message}));
-  if(req.readableEnded)p.end();else req.pipe(p);
+  if(body.length)p.write(body);
+  p.end();
 });
 
 app.listen(PUBLIC_PORT,'0.0.0.0',()=>console.log(`Mis finanzas público listo en ${PUBLIC_PORT} · ${APP_URL}`));
