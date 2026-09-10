@@ -1,6 +1,8 @@
 'use strict';
 (()=>{
   const qs=s=>document.querySelector(s);
+  document.title='Mis finanzas';
+  document.querySelectorAll('h1').forEach(h=>{if(h.textContent.trim()==='Mis Finanzas')h.textContent='Mis finanzas'});
   const api=async(url,opt={})=>{const r=await fetch(url,{...opt,headers:{'content-type':'application/json',...(opt.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Ocurrió un error');return d};
   const toast=(msg,error=false)=>{const t=qs('#toast');if(!t)return alert(msg);t.textContent=msg;t.className='toast show'+(error?' error':'');setTimeout(()=>t.className='toast',3500)};
 
