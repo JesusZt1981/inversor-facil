@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f7fb">
+  <meta name="theme-color" content="#f4f6f8">
   <title>Mis finanzas</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body>
+<body data-theme="light">
   <div id="toast" class="toast" aria-live="polite"></div>
 
   <section id="authView" class="auth-shell">
     <div class="auth-card">
       <div class="brand-mark">$</div>
       <h1>Mis finanzas</h1>
-      <p>Una forma sencilla de saber cuánto entra, cuánto sale y cuándo pagar tus tarjetas.</p>
+      <p>Controla ingresos, gastos y tarjetas en un solo lugar.</p>
       <label>Correo electrónico<input id="authEmail" type="email" autocomplete="email" placeholder="tu@correo.com"></label>
-      <label>Contraseña<input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></label>
+      <label>Contraseña<input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 8 caracteres"></label>
       <button class="btn primary" id="loginBtn">Entrar</button>
       <button class="btn ghost" id="signupBtn">Crear mi cuenta</button>
       <small id="authHelp">Tus datos quedan guardados de forma privada.</small>
@@ -24,32 +24,34 @@
   </section>
 
   <div id="appView" class="app hidden">
-    <header class="topbar">
-      <div>
-        <div class="eyebrow">MI DINERO</div>
-        <h1>Mis finanzas</h1>
+    <header class="topbar shell-card">
+      <div class="brand-line">
+        <div class="brand-mini">$</div>
+        <div><div class="eyebrow">CONTROL PERSONAL</div><h1>Mis finanzas</h1></div>
       </div>
-      <button class="icon-btn" id="logoutBtn" title="Salir">↪</button>
+      <div class="top-actions">
+        <button class="theme-switch" id="themeSwitch" type="button" title="Cambiar tema">🌙 <span>Oscuro</span></button>
+        <button class="icon-btn" id="logoutBtn" title="Cerrar sesión">↪</button>
+      </div>
     </header>
 
     <main>
       <section class="screen active" data-screen="home">
-        <div class="hello-card">
-          <div>
-            <span>Resumen de este mes</span>
-            <strong id="monthLabel">—</strong>
-          </div>
-          <button class="mini-btn" id="refreshBtn">Actualizar</button>
+        <div class="month-strip shell-card">
+          <div><span>Resumen del mes</span><strong id="monthLabel">—</strong></div>
+          <button class="mini-btn" id="refreshBtn">↻ Actualizar</button>
         </div>
 
         <div class="kpi-grid">
-          <article class="kpi income"><span>Ingresos</span><strong id="kIncome">$0</strong></article>
-          <article class="kpi expense"><span>Gastos</span><strong id="kExpense">$0</strong></article>
-          <article class="kpi balance"><span>Disponible</span><strong id="kBalance">$0</strong></article>
+          <article class="kpi income"><span>INGRESOS</span><strong id="kIncome">$0</strong><small>Entradas del mes</small></article>
+          <article class="kpi expense"><span>GASTOS</span><strong id="kExpense">$0</strong><small>Salidas del mes</small></article>
+          <article class="kpi balance"><span>BALANCE</span><strong id="kBalance">$0</strong><small>Ingresos menos gastos</small></article>
         </div>
 
-        <button class="big-action" id="newExpenseBtn"><span class="plus">+</span><span><b>Agregar gasto</b><small>Efectivo, débito o crédito</small></span></button>
-        <button class="big-action secondary" id="newIncomeBtn"><span class="plus">+</span><span><b>Agregar ingreso</b><small>Sueldo, depósito, venta, etc.</small></span></button>
+        <div class="quick-grid">
+          <button class="big-action expense-action" id="newExpenseBtn"><span class="plus">−</span><span><b>Agregar gasto</b><small>Efectivo, débito, crédito o transferencia</small></span></button>
+          <button class="big-action income-action" id="newIncomeBtn"><span class="plus">+</span><span><b>Agregar ingreso</b><small>Sueldo, venta, depósito, etc.</small></span></button>
+        </div>
 
         <section class="panel">
           <div class="section-title"><div><span>⏰</span><h2>Próximos pagos</h2></div><button data-go="cards">Ver tarjetas</button></div>
@@ -68,26 +70,52 @@
       </section>
 
       <section class="screen" data-screen="transactions">
-        <div class="page-head"><div><span class="eyebrow">HISTORIAL</span><h2>Movimientos</h2></div><button class="round-add" id="newTxBtn">+</button></div>
-        <div class="filter-row"><input id="monthFilter" type="month"><button class="btn small" id="applyFilter">Ver mes</button></div>
-        <div class="table-card">
-          <div class="mobile-table" id="transactionsList"><div class="empty-state">Sin movimientos.</div></div>
+        <div class="page-head shell-card">
+          <div><span class="eyebrow">HISTORIAL</span><h2>Movimientos</h2><p>Vista tipo hoja de cálculo, separada por gastos e ingresos.</p></div>
+          <button class="round-add" id="newTxBtn" title="Agregar movimiento">+</button>
         </div>
-      </section>
 
-      <section class="screen" data-screen="cards">
-        <div class="page-head"><div><span class="eyebrow">TARJETAS</span><h2>Tarjetas de crédito</h2></div><button class="round-add" id="newCardBtn">+</button></div>
-        <div class="info-banner">Con corte <b>día 15</b> y pago <b>día 3</b>, una compra del 10 se paga el 3 del mes siguiente. Una compra del 20 se paga hasta el 3 del mes posterior al siguiente corte.</div>
-        <div id="cardsList" class="cards-grid"><div class="empty-state">Aún no hay tarjetas.</div></div>
+        <div class="movement-toolbar shell-card">
+          <div class="view-switch" role="tablist" aria-label="Tipo de movimiento">
+            <button id="showExpensesBtn" class="active expense-tab" type="button">Gastos</button>
+            <button id="showIncomeBtn" class="income-tab" type="button">Ingresos</button>
+          </div>
+          <div class="filter-row"><input id="monthFilter" type="month"><button class="btn small" id="applyFilter">Ver mes</button></div>
+        </div>
 
-        <section class="panel statements-panel">
-          <div class="section-title"><div><span>🧾</span><h2>Estados de cuenta</h2></div></div>
-          <div id="statementsList" class="stack-list empty-state">Sin estados de cuenta.</div>
+        <section class="sheet-card">
+          <div class="sheet-head">
+            <div><span class="sheet-label" id="movementSheetLabel">GASTOS DEL MES</span><h3 id="movementSheetTitle">Tabla de gastos</h3></div>
+            <div class="sheet-total"><span>Total</span><strong id="movementTotal">$0.00</strong></div>
+          </div>
+          <div class="sheet-scroll">
+            <table class="finance-sheet">
+              <thead><tr><th>FECHA</th><th>CONCEPTO</th><th>CATEGORÍA</th><th>MÉTODO</th><th class="num">IMPORTE</th><th class="actions-col">ACCIONES</th></tr></thead>
+              <tbody id="transactionsList"><tr><td colspan="6" class="empty-cell">Sin movimientos.</td></tr></tbody>
+              <tfoot><tr><td colspan="4">TOTAL <span id="movementCount">0 movimientos</span></td><td class="num" id="movementTotalFooter">$0.00</td><td></td></tr></tfoot>
+            </table>
+          </div>
+        </section>
+
+        <section class="sheet-card balance-sheet">
+          <div class="sheet-head"><div><span class="sheet-label">RESULTADO DEL MES</span><h3>Ingresos menos gastos</h3></div></div>
+          <div class="summary-grid-table">
+            <div class="summary-cell income"><span>Ingresos</span><strong id="summaryIncome">$0.00</strong></div>
+            <div class="summary-cell expense"><span>Gastos</span><strong id="summaryExpense">$0.00</strong></div>
+            <div class="summary-cell balance"><span>Balance</span><strong id="summaryBalance">$0.00</strong></div>
+          </div>
         </section>
       </section>
 
+      <section class="screen" data-screen="cards">
+        <div class="page-head shell-card"><div><span class="eyebrow">TARJETAS</span><h2>Tarjetas de crédito</h2><p>Control de cortes, pagos y compras.</p></div><button class="round-add" id="newCardBtn">+</button></div>
+        <div class="info-banner">Cada tarjeta puede tener su propio día de corte y fecha límite de pago.</div>
+        <div id="cardsList" class="cards-grid"><div class="empty-state">Aún no hay tarjetas.</div></div>
+        <section class="panel statements-panel"><div class="section-title"><div><span>🧾</span><h2>Estados de cuenta</h2></div></div><div id="statementsList" class="stack-list empty-state">Sin estados de cuenta.</div></section>
+      </section>
+
       <section class="screen" data-screen="settings">
-        <div class="page-head"><div><span class="eyebrow">CONFIGURACIÓN</span><h2>Avisos por correo</h2></div></div>
+        <div class="page-head shell-card"><div><span class="eyebrow">CONFIGURACIÓN</span><h2>Avisos por correo</h2><p>Define dónde quieres recibir recordatorios.</p></div></div>
         <div class="panel settings-card">
           <label>Correo para recordatorios<input id="notificationEmail" type="email" placeholder="correo@ejemplo.com"></label>
           <label class="toggle-row"><span><b>Enviar recordatorios</b><small>Corte, 5 días antes, un día antes y fecha límite.</small></span><input id="emailNotifications" type="checkbox" checked></label>
@@ -107,8 +135,7 @@
   <dialog id="txDialog" class="modal">
     <form method="dialog" id="txForm">
       <div class="modal-head"><div><span class="eyebrow" id="txEyebrow">NUEVO</span><h2 id="txTitle">Agregar gasto</h2></div><button class="close" value="cancel">×</button></div>
-      <input type="hidden" id="txId">
-      <input type="hidden" id="txType" value="expense">
+      <input type="hidden" id="txId"><input type="hidden" id="txType" value="expense">
       <div class="form-grid">
         <label>Fecha<input id="txDate" type="date" required></label>
         <label>Concepto<input id="txDescription" maxlength="160" placeholder="Ej. Supermercado" required></label>
@@ -123,42 +150,11 @@
     </form>
   </dialog>
 
-  <dialog id="cardDialog" class="modal">
-    <form method="dialog" id="cardForm">
-      <div class="modal-head"><div><span class="eyebrow">TARJETA</span><h2 id="cardTitle">Agregar tarjeta</h2></div><button class="close" value="cancel">×</button></div>
-      <input type="hidden" id="cardId">
-      <div class="form-grid">
-        <label>Nombre<input id="cardName" placeholder="Ej. BBVA Azul" required></label>
-        <label>Banco<input id="cardBank" placeholder="Ej. BBVA"></label>
-        <label>Últimos 4 dígitos<input id="cardLast4" inputmode="numeric" maxlength="4" placeholder="1234"></label>
-        <label>Límite de crédito<input id="cardLimit" type="number" min="0" step="0.01" placeholder="Opcional"></label>
-        <label>Día de corte<input id="cardCutoff" type="number" min="1" max="28" value="15" required></label>
-        <label>Día límite de pago<input id="cardPayment" type="number" min="1" max="28" value="3" required></label>
-      </div>
-      <div class="tip">Configuración inicial recomendada: <b>corte 15</b> y <b>pago 3</b>.</div>
-      <button type="button" class="btn primary" id="saveCardBtn">Guardar tarjeta</button>
-    </form>
-  </dialog>
+  <dialog id="cardDialog" class="modal"><form method="dialog" id="cardForm"><div class="modal-head"><div><span class="eyebrow">TARJETA</span><h2 id="cardTitle">Agregar tarjeta</h2></div><button class="close" value="cancel">×</button></div><input type="hidden" id="cardId"><div class="form-grid"><label>Nombre<input id="cardName" placeholder="Ej. BBVA Azul" required></label><label>Banco<input id="cardBank" placeholder="Ej. BBVA"></label><label>Últimos 4 dígitos<input id="cardLast4" inputmode="numeric" maxlength="4" placeholder="1234"></label><label>Límite de crédito<input id="cardLimit" type="number" min="0" step="0.01" placeholder="Opcional"></label><label>Día de corte<input id="cardCutoff" type="number" min="1" max="28" value="15" required></label><label>Día límite de pago<input id="cardPayment" type="number" min="1" max="28" value="3" required></label></div><div class="tip">Configuración inicial recomendada: <b>corte 15</b> y <b>pago 3</b>.</div><button type="button" class="btn primary" id="saveCardBtn">Guardar tarjeta</button></form></dialog>
 
-  <dialog id="paymentDialog" class="modal compact-modal">
-    <form method="dialog">
-      <div class="modal-head"><div><span class="eyebrow">PAGO</span><h2 id="paymentTitle">Registrar pago</h2></div><button class="close" value="cancel">×</button></div>
-      <input type="hidden" id="statementId">
-      <label>Importe pagado<input id="paymentAmount" type="number" min="0.01" step="0.01" required></label>
-      <label>Fecha del pago<input id="paymentDate" type="date" required></label>
-      <button type="button" class="btn primary" id="savePaymentBtn">Marcar pago</button>
-    </form>
-  </dialog>
+  <dialog id="paymentDialog" class="modal compact-modal"><form method="dialog"><div class="modal-head"><div><span class="eyebrow">PAGO</span><h2 id="paymentTitle">Registrar pago</h2></div><button class="close" value="cancel">×</button></div><input type="hidden" id="statementId"><label>Importe pagado<input id="paymentAmount" type="number" min="0.01" step="0.01" required></label><label>Fecha del pago<input id="paymentDate" type="date" required></label><button type="button" class="btn primary" id="savePaymentBtn">Marcar pago</button></form></dialog>
 
-  <dialog id="amountDialog" class="modal compact-modal">
-    <form method="dialog">
-      <div class="modal-head"><div><span class="eyebrow">ESTADO DE CUENTA</span><h2>Monto exacto del banco</h2></div><button class="close" value="cancel">×</button></div>
-      <input type="hidden" id="amountStatementId">
-      <p class="helper">Si el banco muestra un “pago para no generar intereses” diferente, escríbelo aquí y éste será el monto que usarán los recordatorios.</p>
-      <label>Pago para no generar intereses<input id="statementAmount" type="number" min="0.01" step="0.01"></label>
-      <button type="button" class="btn primary" id="saveStatementAmountBtn">Guardar monto</button>
-    </form>
-  </dialog>
+  <dialog id="amountDialog" class="modal compact-modal"><form method="dialog"><div class="modal-head"><div><span class="eyebrow">ESTADO DE CUENTA</span><h2>Monto exacto del banco</h2></div><button class="close" value="cancel">×</button></div><input type="hidden" id="amountStatementId"><p class="helper">Si el banco muestra un “pago para no generar intereses” diferente, escríbelo aquí.</p><label>Pago para no generar intereses<input id="statementAmount" type="number" min="0.01" step="0.01"></label><button type="button" class="btn primary" id="saveStatementAmountBtn">Guardar monto</button></form></dialog>
 
   <script src="/app.js" defer></script>
 </body>
