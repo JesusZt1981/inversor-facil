@@ -1,5 +1,6 @@
 'use strict';
 const https=require('node:https');
+const fs=require('node:fs');
 const path=require('node:path');
 const express=require('express');
 
@@ -13,6 +14,13 @@ let backendReadyUntil=0;
 
 app.disable('x-powered-by');
 app.get('/api/health',(_req,res)=>res.json({ok:true,app:'mis-finanzas',target:TARGET,time:new Date().toISOString()}));
+
+// Mejora de UX para pagos programados sin tocar la lógica principal.
+app.get('/app-v3.js',(_req,res)=>{
+  const baseJs=fs.readFileSync(path.join(PUBLIC_DIR,'app-v3.js'),'utf8');
+  const uxPatch=`\n;(()=>{\n  const installment=document.querySelector('#obInstallment');\n  const frequency=document.querySelector('#obFrequency');\n  const initial=document.querySelector('#obInitial');\n  const due=document.querySelector('#obNextDue');\n  if(!installment||!frequency)return;\n\n  const label=installment.closest('label');\n  if(label){\n    label.childNodes[0].nodeValue='¿Cuánto pagas cada vez?';\n    let help=document.querySelector('#obInstallmentHelp');\n    if(!help){\n      help=document.createElement('small');\n      help.id='obInstallmentHelp';\n      help.style.display='block';\n      help.style.marginTop='6px';\n      help.style.fontWeight='600';\n      help.style.opacity='.72';\n      label.appendChild(help);\n    }\n    const refresh=()=>{\n      const text={weekly:'Este monto se paga cada semana.',biweekly:'Este monto se paga cada 15 días.',monthly:'Este monto se paga cada mes.',once:'Este es el monto del único pago.',custom:'Este monto se paga en cada periodo personalizado.'};\n      help.textContent=text[frequency.value]||'Monto de cada pago.';\n    };\n    frequency.addEventListener('change',refresh);\n    refresh();\n  }\n\n  installment.min='0.01';\n  installment.step='0.01';\n  installment.placeholder='Ej. 800';\n  installment.addEventListener('input',()=>{\n    if(Number(installment.value)<0)installment.value='';\n  });\n  if(initial){initial.min='0.01';initial.placeholder='Ej. 13000';}\n  if(due){\n    const dueLabel=due.closest('label');\n    if(dueLabel)dueLabel.childNodes[0].nodeValue='Próxima fecha de pago';\n  }\n})();\n`;
+  res.type('application/javascript').send(baseJs+uxPatch);
+});
 
 // La interfaz se sirve desde este mismo servicio para que siempre pueda abrir.
 app.use(express.static(PUBLIC_DIR,{maxAge:'5m',etag:true}));
