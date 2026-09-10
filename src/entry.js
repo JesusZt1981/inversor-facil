@@ -1,66 +1,50 @@
 'use strict';
 const http=require('node:http');
+const crypto=require('node:crypto');
 const {spawn}=require('node:child_process');
 const express=require('express');
+const {createClient}=require('@supabase/supabase-js');
 
 const PORT=Number(process.env.PORT||10000);
 const INNER_PORT=PORT+1;
+const SUPABASE_URL=process.env.SUPABASE_URL||'';
+const SUPABASE_PUBLISHABLE_KEY=process.env.SUPABASE_PUBLISHABLE_KEY||'';
+const SUPABASE_ADMIN_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY||'';
+const BREVO_API_KEY=process.env.BREVO_API_KEY||'';
+const SENDER_EMAIL=process.env.BREVO_SENDER_EMAIL||process.env.MAIL_FROM||'';
+const SENDER_NAME=process.env.BREVO_SENDER_NAME||process.env.MAIL_FROM_NAME||'Mis finanzas';
+const APP_URL=process.env.APP_PUBLIC_URL||'https://mis-finanzas-7hyw.onrender.com';
 
-const child=spawn(process.execPath,['src/public.js'],{
-  stdio:'inherit',
-  env:{...process.env,PORT:String(INNER_PORT)}
-});
+const auth=()=>createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+const admin=()=>createClient(SUPABASE_URL,SUPABASE_ADMIN_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+const text=(v,n=200)=>String(v||'').trim().slice(0,n);
+const hash=t=>crypto.createHash('sha256').update(String(t)).digest('hex');
+const cookieOpts=s=>`HttpOnly; Path=/; SameSite=Lax; Max-Age=${s}; ${process.env.NODE_ENV==='production'?'Secure;':''}`;
+function setSession(res,s){res.append('Set-Cookie',`fin_access=${encodeURIComponent(s.access_token)}; ${cookieOpts(Math.max(60,s.expires_in||3600))}`);res.append('Set-Cookie',`fin_refresh=${encodeURIComponent(s.refresh_token)}; ${cookieOpts(2592000)}`)}
+function clearSession(res){res.append('Set-Cookie',`fin_access=; ${cookieOpts(0)}`);res.append('Set-Cookie',`fin_refresh=; ${cookieOpts(0)}`)}
+function requireAdmin(){if(!SUPABASE_URL||!SUPABASE_ADMIN_KEY)throw new Error('Supabase admin no configurado')}
+async function findUserByEmail(db,email){for(let page=1;page<=50;page++){const {data,error}=await db.auth.admin.listUsers({page,perPage:100});if(error)throw error;const users=data?.users||[];const found=users.find(u=>String(u.email||'').toLowerCase()===email);if(found)return found;if(users.length<100)break}return null}
+async function sendBrevo(to,subject,htmlContent){if(!BREVO_API_KEY||!SENDER_EMAIL)throw new Error('Correo transaccional no configurado');const r=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'content-type':'application/json','api-key':BREVO_API_KEY},body:JSON.stringify({sender:{name:SENDER_NAME,email:SENDER_EMAIL},to:[{email:to}],subject,htmlContent})});const body=await r.text();if(!r.ok)throw new Error(`Brevo ${r.status}: ${body.slice(0,220)}`)}
+
+const child=spawn(process.execPath,['src/public.js'],{stdio:'inherit',env:{...process.env,PORT:String(INNER_PORT)}});
 child.on('exit',code=>{console.error('Mis finanzas inner exited',code);process.exit(code||1)});
 
 const app=express();
 app.disable('x-powered-by');
+app.use(express.json({limit:'10mb'}));
+app.get('/api/health',(_req,res)=>res.json({ok:true,app:'mis-finanzas',auth_admin:!!SUPABASE_ADMIN_KEY,mail:!!BREVO_API_KEY&&!!SENDER_EMAIL,time:new Date().toISOString()}));
 
-app.use(async(req,res)=>{
-  try{
-    const body=await readBody(req);
-    const result=await forward(req,body);
-    if(req.method==='GET'&&req.originalUrl==='/api/me'&&result.status===401){
-      return res.status(200).json({authenticated:false});
-    }
-    const headers={...result.headers};
-    delete headers['content-length'];
-    res.writeHead(result.status,headers);
-    res.end(result.body);
-  }catch(e){
-    console.error('ENTRY PROXY ERROR',req.method,req.originalUrl,e.message);
-    res.status(502).json({error:'Servicio temporalmente no disponible.'});
-  }
-});
+app.post('/api/auth/login',async(req,res)=>{const email=text(req.body?.email).toLowerCase(),password=String(req.body?.password||'');if(!email||!password)return res.status(400).json({error:'Escribe correo y contraseña.'});try{const {data,error}=await auth().auth.signInWithPassword({email,password});if(error){const m=String(error.message||'');if(/confirm/i.test(m))return res.status(403).json({error:'Primero confirma tu correo desde el mensaje de Mis finanzas.'});return res.status(400).json({error:'Correo o contraseña incorrectos.'})}if(!data?.session)return res.status(400).json({error:'No se pudo iniciar sesión.'});setSession(res,data.session);return res.json({ok:true})}catch(e){console.error('LOGIN ERROR',e.message);return res.status(500).json({error:'No se pudo iniciar sesión.'})}});
+app.post('/api/auth/logout',async(_req,res)=>{clearSession(res);return res.json({ok:true})});
 
-function readBody(req){
-  if(req.method==='GET'||req.method==='HEAD')return Promise.resolve(Buffer.alloc(0));
-  return new Promise((resolve,reject)=>{
-    const chunks=[];let size=0;
-    req.on('data',c=>{
-      size+=c.length;
-      if(size>12*1024*1024){reject(new Error('Solicitud demasiado grande'));req.destroy();return}
-      chunks.push(c);
-    });
-    req.on('end',()=>resolve(Buffer.concat(chunks)));
-    req.on('error',reject);
-  });
-}
+app.post('/api/auth/signup',async(req,res)=>{const email=text(req.body?.email).toLowerCase(),password=String(req.body?.password||'');if(!/^\S+@\S+\.\S+$/.test(email))return res.status(400).json({error:'Escribe un correo válido.'});if(password.length<8)return res.status(400).json({error:'La contraseña debe tener al menos 8 caracteres.'});let createdUserId=null;try{requireAdmin();const db=admin();const existing=await findUserByEmail(db,email);if(existing)return res.status(409).json({error:existing.email_confirmed_at?'Este correo ya tiene una cuenta. Usa Entrar o recupera tu contraseña.':'Este correo ya tiene un registro pendiente. Revisa el correo de confirmación.'});const {data,error}=await db.auth.admin.createUser({email,password,email_confirm:false});if(error)throw error;createdUserId=data?.user?.id||null;if(!createdUserId)throw new Error('No se creó el usuario');const token=crypto.randomBytes(32).toString('base64url'),expiresAt=new Date(Date.now()+86400000).toISOString();const {error:tokenError}=await db.from('finance_email_confirmations').insert({user_id:createdUserId,token_hash:hash(token),expires_at:expiresAt});if(tokenError)throw tokenError;const {error:settingsError}=await db.from('user_settings').upsert({user_id:createdUserId,notification_email:email,email_notifications:true,theme:'steel'},{onConflict:'user_id'});if(settingsError)throw settingsError;const link=`${APP_URL}/?confirm_token=${encodeURIComponent(token)}`;const html=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#172033"><h2>Confirma tu cuenta</h2><p>Activa tu cuenta de <b>Mis finanzas</b>.</p><p><a href="${link}" style="display:inline-block;background:#0f7f8f;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700">Confirmar mi cuenta</a></p><p style="font-size:13px;color:#64748b">Este enlace vence en 24 horas.</p></div>`;await sendBrevo(email,'Confirma tu cuenta - Mis finanzas',html);console.log('MIS FINANZAS SIGNUP SENT',email);return res.status(201).json({ok:true,needs_confirmation:true,email,message:'Cuenta creada. Revisa tu correo para confirmarla.'})}catch(e){console.error('MIS FINANZAS SIGNUP ERROR',e.message);if(createdUserId){try{await admin().auth.admin.deleteUser(createdUserId);console.log('MIS FINANZAS SIGNUP ROLLBACK',email)}catch(re){console.error('MIS FINANZAS SIGNUP ROLLBACK ERROR',re.message)}}return res.status(500).json({error:'No se pudo completar el registro. No se guardó la cuenta. Intenta nuevamente.'})}});
 
-function forward(req,body){
-  return new Promise((resolve,reject)=>{
-    const headers={...req.headers,host:`127.0.0.1:${INNER_PORT}`};
-    delete headers['content-length'];delete headers['transfer-encoding'];
-    if(body.length)headers['content-length']=String(body.length);
-    const p=http.request({hostname:'127.0.0.1',port:INNER_PORT,path:req.originalUrl,method:req.method,headers,timeout:12000},up=>{
-      const chunks=[];
-      up.on('data',c=>chunks.push(c));
-      up.on('end',()=>resolve({status:up.statusCode||502,headers:up.headers,body:Buffer.concat(chunks)}));
-    });
-    p.on('timeout',()=>p.destroy(new Error('Timeout interno')));
-    p.on('error',reject);
-    if(body.length)p.write(body);
-    p.end();
-  });
-}
+app.post('/api/auth/confirm-email',async(req,res)=>{const token=String(req.body?.token||'');if(!token)return res.status(400).json({error:'Enlace de confirmación inválido.'});try{requireAdmin();const db=admin();const {data:row,error}=await db.from('finance_email_confirmations').select('id,user_id,expires_at,used_at').eq('token_hash',hash(token)).maybeSingle();if(error)throw error;if(!row||row.used_at||new Date(row.expires_at).getTime()<Date.now())return res.status(400).json({error:'El enlace de confirmación no es válido o expiró.'});const {error:updateError}=await db.auth.admin.updateUserById(row.user_id,{email_confirm:true});if(updateError)throw updateError;await db.from('finance_email_confirmations').update({used_at:new Date().toISOString()}).eq('id',row.id);return res.json({ok:true,message:'Correo confirmado. Ya puedes entrar.'})}catch(e){console.error('CONFIRM ERROR',e.message);return res.status(500).json({error:'No se pudo confirmar la cuenta.'})}});
 
+app.post('/api/auth/forgot',async(req,res)=>{const email=text(req.body?.email).toLowerCase();if(!/^\S+@\S+\.\S+$/.test(email))return res.status(400).json({error:'Escribe un correo válido.'});const generic={ok:true,message:'Si la cuenta existe, recibirás un correo para cambiar la contraseña.'};try{requireAdmin();const db=admin();const user=await findUserByEmail(db,email);if(!user)return res.json(generic);const token=crypto.randomBytes(32).toString('base64url'),expiresAt=new Date(Date.now()+1800000).toISOString();await db.from('finance_password_resets').delete().eq('user_id',user.id).is('used_at',null);const {error:insertError}=await db.from('finance_password_resets').insert({user_id:user.id,token_hash:hash(token),expires_at:expiresAt});if(insertError)throw insertError;const link=`${APP_URL}/?reset_token=${encodeURIComponent(token)}`;const html=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#172033"><h2>Recupera tu contraseña</h2><p>Recibimos una solicitud para cambiar la contraseña de tu cuenta de <b>Mis finanzas</b>.</p><p><a href="${link}" style="display:inline-block;background:#0f7f8f;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700">Cambiar contraseña</a></p><p style="font-size:13px;color:#64748b">Este enlace vence en 30 minutos.</p></div>`;await sendBrevo(email,'Recupera tu contraseña - Mis finanzas',html);return res.json(generic)}catch(e){console.error('RESET MAIL ERROR',e.message);return res.status(500).json({error:'No se pudo enviar el correo de recuperación.'})}});
+
+app.post('/api/auth/reset-password',async(req,res)=>{const token=String(req.body?.token||''),password=String(req.body?.password||'');if(!token)return res.status(400).json({error:'El enlace de recuperación no es válido o expiró.'});if(password.length<8)return res.status(400).json({error:'La nueva contraseña debe tener al menos 8 caracteres.'});try{requireAdmin();const db=admin();const {data:row,error}=await db.from('finance_password_resets').select('id,user_id,expires_at,used_at').eq('token_hash',hash(token)).maybeSingle();if(error)throw error;if(!row||row.used_at||new Date(row.expires_at).getTime()<Date.now())return res.status(400).json({error:'El enlace de recuperación no es válido o expiró.'});const {error:updateError}=await db.auth.admin.updateUserById(row.user_id,{password,email_confirm:true});if(updateError)throw updateError;await db.from('finance_password_resets').update({used_at:new Date().toISOString()}).eq('id',row.id);return res.json({ok:true,message:'Contraseña actualizada.'})}catch(e){console.error('RESET PASSWORD ERROR',e.message);return res.status(500).json({error:'No se pudo actualizar la contraseña.'})}});
+
+app.use(async(req,res)=>{try{const body=(req.method==='GET'||req.method==='HEAD'||req.body===undefined)?Buffer.alloc(0):Buffer.from(JSON.stringify(req.body));const result=await forward(req,body);if(req.method==='GET'&&req.originalUrl==='/api/me'&&result.status===401)return res.status(200).json({authenticated:false});const headers={...result.headers};delete headers['content-length'];res.writeHead(result.status,headers);res.end(result.body)}catch(e){console.error('ENTRY PROXY ERROR',req.method,req.originalUrl,e.message);res.status(502).json({error:'Servicio temporalmente no disponible.'})}});
+function forward(req,body){return new Promise((resolve,reject)=>{const headers={...req.headers,host:`127.0.0.1:${INNER_PORT}`};delete headers['content-length'];delete headers['transfer-encoding'];if(body.length){headers['content-type']='application/json';headers['content-length']=String(body.length)}const p=http.request({hostname:'127.0.0.1',port:INNER_PORT,path:req.originalUrl,method:req.method,headers,timeout:12000},up=>{const chunks=[];up.on('data',c=>chunks.push(c));up.on('end',()=>resolve({status:up.statusCode||502,headers:up.headers,body:Buffer.concat(chunks)}))});p.on('timeout',()=>p.destroy(new Error('Timeout interno')));p.on('error',reject);if(body.length)p.write(body);p.end()})}
 app.listen(PORT,'0.0.0.0',()=>console.log(`Mis finanzas entry listo en ${PORT}`));
