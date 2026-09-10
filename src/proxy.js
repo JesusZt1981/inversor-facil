@@ -8,18 +8,22 @@ const PORT=Number(process.env.PORT||10000);
 const TARGET='finanzas-mama.onrender.com';
 const TRANSIENT=new Set([502,503,504]);
 const PUBLIC_DIR=path.join(__dirname,'..','public');
+let warmPromise=null;
+let backendReadyUntil=0;
 
 app.disable('x-powered-by');
 app.get('/api/health',(_req,res)=>res.json({ok:true,app:'mis-finanzas',target:TARGET,time:new Date().toISOString()}));
 
-// La interfaz se sirve desde este mismo servicio. Así la app abre aunque el backend esté despertando.
+// La interfaz se sirve desde este mismo servicio para que siempre pueda abrir.
 app.use(express.static(PUBLIC_DIR,{maxAge:'5m',etag:true}));
 
 app.use('/api',async(req,res)=>{
   try{
     const body=await readBody(req);
-    const result=await forwardWithRetry(req,body,5);
+    await ensureBackendReady();
+    const result=await forwardWithRetry(req,body,8);
 
+    // La comprobación de sesión al abrir la app no es un error si aún no hay sesión.
     if(req.method==='GET'&&req.path==='/me'&&result.status===401){
       return res.status(200).json({authenticated:false});
     }
@@ -30,8 +34,8 @@ app.use('/api',async(req,res)=>{
     res.writeHead(result.status,headers);
     res.end(result.body);
   }catch(e){
-    console.error('MIS FINANZAS API PROXY ERROR',e.message);
-    res.status(503).json({error:'El servicio de datos está iniciando. Intenta nuevamente en unos segundos.'});
+    console.error('MIS FINANZAS API PROXY ERROR',req.method,req.originalUrl,e.message);
+    res.status(503).json({error:'El servicio de datos está iniciando. Espera unos segundos y vuelve a intentar.'});
   }
 });
 
@@ -51,30 +55,60 @@ function readBody(req){
   });
 }
 
+async function ensureBackendReady(){
+  if(Date.now()<backendReadyUntil)return;
+  if(warmPromise)return warmPromise;
+  warmPromise=(async()=>{
+    let lastError=null;
+    for(let attempt=1;attempt<=12;attempt++){
+      try{
+        const r=await rawRequest('GET','/api/health',{},Buffer.alloc(0),12000);
+        if(r.status>=200&&r.status<500){
+          backendReadyUntil=Date.now()+5*60*1000;
+          console.log('MIS FINANZAS BACKEND READY',r.status);
+          return;
+        }
+        lastError=new Error(`Backend ${r.status}`);
+      }catch(e){lastError=e}
+      await sleep(Math.min(5000,1000+attempt*500));
+    }
+    throw lastError||new Error('Backend no disponible');
+  })().finally(()=>{warmPromise=null});
+  return warmPromise;
+}
+
 async function forwardWithRetry(req,body,maxAttempts){
   let lastError=null;
   for(let attempt=1;attempt<=maxAttempts;attempt++){
     try{
       const r=await forwardOnce(req,body);
-      if(!TRANSIENT.has(r.status)||attempt===maxAttempts)return r;
+      if(!TRANSIENT.has(r.status)){
+        backendReadyUntil=Date.now()+5*60*1000;
+        return r;
+      }
       lastError=new Error(`Backend ${r.status}`);
+      backendReadyUntil=0;
     }catch(e){
       lastError=e;
-      if(attempt===maxAttempts)throw e;
+      backendReadyUntil=0;
     }
-    await sleep(Math.min(3500,attempt*1000));
+    if(attempt<maxAttempts)await sleep(Math.min(5000,1000+attempt*600));
   }
   throw lastError||new Error('Backend no disponible');
 }
 
 function forwardOnce(req,body){
+  const headers={...req.headers,host:TARGET};
+  delete headers['content-length'];
+  delete headers['transfer-encoding'];
+  if(body.length)headers['content-length']=String(body.length);
+  // req.originalUrl YA contiene /api. No se debe anteponer /api otra vez.
+  return rawRequest(req.method,req.originalUrl,headers,body,20000);
+}
+
+function rawRequest(method,requestPath,headers,body,timeout){
   return new Promise((resolve,reject)=>{
-    const headers={...req.headers,host:TARGET};
-    delete headers['content-length'];
-    delete headers['transfer-encoding'];
-    if(body.length)headers['content-length']=String(body.length);
-    const apiPath='/api'+req.originalUrl;
-    const p=https.request({hostname:TARGET,port:443,path:apiPath,method:req.method,headers,timeout:20000},up=>{
+    const p=https.request({hostname:TARGET,port:443,path:requestPath,method,headers,timeout},up=>{
       const chunks=[];
       up.on('data',c=>chunks.push(c));
       up.on('end',()=>resolve({status:up.statusCode||502,headers:up.headers,body:Buffer.concat(chunks)}));
@@ -87,4 +121,8 @@ function forwardOnce(req,body){
 }
 
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-app.listen(PORT,'0.0.0.0',()=>console.log(`Mis finanzas UI + API proxy listo en ${PORT}`));
+app.listen(PORT,'0.0.0.0',()=>{
+  console.log(`Mis finanzas UI + API proxy listo en ${PORT}`);
+  // Despierta el backend una sola vez cuando este servicio arranca.
+  ensureBackendReady().catch(e=>console.error('MIS FINANZAS BACKEND WARMUP',e.message));
+});
