@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: finanzas-mama
+    name: mis-finanzas
     runtime: node
     plan: free
     region: oregon
