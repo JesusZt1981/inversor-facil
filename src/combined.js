@@ -11,6 +11,7 @@ const BREVO_API_KEY=process.env.BREVO_API_KEY||'';
 const SENDER_EMAIL=process.env.BREVO_SENDER_EMAIL||process.env.MAIL_FROM||'';
 const SENDER_NAME=process.env.BREVO_SENDER_NAME||'Mis Finanzas';
 const CRON_SECRET=process.env.CRON_SECRET||'';
+let lastScheduledRun=0;
 
 const child=spawn(process.execPath,['src/server.js'],{
   stdio:'inherit',
@@ -46,6 +47,22 @@ app.post('/api/reminders/run',express.json({limit:'64kb'}),async(req,res)=>{
   }catch(e){
     console.error('FINANCE REMINDERS ERROR',e);
     res.status(500).json({ok:false,error:e.message});
+  }
+});
+
+app.post('/internal/finance-reminders-scheduled',express.json({limit:'8kb'}),async(req,res)=>{
+  if(req.get('x-finance-scheduler')!=='supabase-cron-v1')return res.status(404).end();
+  const now=Date.now();
+  if(now-lastScheduledRun<30*60*1000)return res.json({ok:true,skipped:'recent-run'});
+  lastScheduledRun=now;
+  try{
+    const result=await runReminders();
+    console.log('FINANCE REMINDERS SCHEDULED',result);
+    res.status(result.ok?200:207).json({ok:result.ok});
+  }catch(e){
+    lastScheduledRun=0;
+    console.error('FINANCE REMINDERS SCHEDULED ERROR',e);
+    res.status(500).json({ok:false});
   }
 });
 
