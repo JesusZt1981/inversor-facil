@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Mis Finanzas</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <section id="authView" class="auth-shell">
+    <div class="auth-card">
+      <div class="brand-mark">$</div>
+      <h1>Mis Finanzas</h1>
+      <p>Una forma sencilla de saber cuánto entra, cuánto sale y cuándo pagar tus tarjetas.</p>
+      <label>Correo electrónico<input id="authEmail" type="email" autocomplete="email" placeholder="tu@correo.com"></label>
+      <label>Contraseña<input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></label>
+      <button class="btn primary" id="loginBtn">Entrar</button>
+      <button class="btn ghost" id="signupBtn">Crear mi cuenta</button>
+      <small id="authHelp">Tus datos quedan guardados de forma privada.</small>
+    </div>
+  </section>
+
+  <div id="appView" class="app hidden">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">MI DINERO</div>
+        <h1>Mis Finanzas</h1>
+      </div>
+      <button class="icon-btn" id="logoutBtn" title="Salir">↪</button>
+    </header>
+
+    <main>
+      <section class="screen active" data-screen="home">
+        <div class="hello-card">
+          <div>
+            <span>Resumen de este mes</span>
+            <strong id="monthLabel">—</strong>
+          </div>
+          <button class="mini-btn" id="refreshBtn">Actualizar</button>
+        </div>
+
+        <div class="kpi-grid">
+          <article class="kpi income"><span>Ingresos</span><strong id="kIncome">$0</strong></article>
+          <article class="kpi expense"><span>Gastos</span><strong id="kExpense">$0</strong></article>
+          <article class="kpi balance"><span>Disponible</span><strong id="kBalance">$0</strong></article>
+        </div>
+
+        <button class="big-action" id="newExpenseBtn"><span class="plus">+</span><span><b>Agregar gasto</b><small>Efectivo, débito o crédito</small></span></button>
+        <button class="big-action secondary" id="newIncomeBtn"><span class="plus">+</span><span><b>Agregar ingreso</b><small>Sueldo, depósito, venta, etc.</small></span></button>
+
+        <section class="panel">
+          <div class="section-title"><div><span>⏰</span><h2>Próximos pagos</h2></div><button data-go="cards">Ver tarjetas</button></div>
+          <div id="upcomingList" class="stack-list empty-state">No hay pagos pendientes.</div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title"><div><span>💳</span><h2>Compras del corte actual</h2></div></div>
+          <div id="cycleList" class="stack-list empty-state">Agrega una tarjeta para comenzar.</div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title"><div><span>📊</span><h2>¿En qué se gastó?</h2></div></div>
+          <div id="categoryBars" class="category-bars empty-state">Todavía no hay gastos este mes.</div>
+        </section>
+      </section>
+
+      <section class="screen" data-screen="transactions">
+        <div class="page-head"><div><span class="eyebrow">HISTORIAL</span><h2>Movimientos</h2></div><button class="round-add" id="newTxBtn">+</button></div>
+        <div class="filter-row"><input id="monthFilter" type="month"><button class="btn small" id="applyFilter">Ver mes</button></div>
+        <div class="table-card">
+          <div class="mobile-table" id="transactionsList"><div class="empty-state">Sin movimientos.</div></div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="cards">
+        <div class="page-head"><div><span class="eyebrow">TARJETAS</span><h2>Tarjetas de crédito</h2></div><button class="round-add" id="newCardBtn">+</button></div>
+        <div class="info-banner">Con corte <b>día 15</b> y pago <b>día 3</b>, una compra del 10 se paga el 3 del mes siguiente. Una compra del 20 se paga hasta el 3 del mes posterior al siguiente corte.</div>
+        <div id="cardsList" class="cards-grid"><div class="empty-state">Aún no hay tarjetas.</div></div>
+
+        <section class="panel statements-panel">
+          <div class="section-title"><div><span>🧾</span><h2>Estados de cuenta</h2></div></div>
+          <div id="statementsList" class="stack-list empty-state">Sin estados de cuenta.</div>
+        </section>
+      </section>
+
+      <section class="screen" data-screen="settings">
+        <div class="page-head"><div><span class="eyebrow">CONFIGURACIÓN</span><h2>Avisos por correo</h2></div></div>
+        <div class="panel settings-card">
+          <label>Correo para recordatorios<input id="notificationEmail" type="email" placeholder="correo@ejemplo.com"></label>
+          <label class="toggle-row"><span><b>Enviar recordatorios</b><small>Corte, 5 días antes, un día antes y fecha límite.</small></span><input id="emailNotifications" type="checkbox" checked></label>
+          <button class="btn primary" id="saveSettingsBtn">Guardar configuración</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="active" data-go="home"><span>⌂</span>Inicio</button>
+      <button data-go="transactions"><span>☷</span>Movimientos</button>
+      <button data-go="cards"><span>▣</span>Tarjetas</button>
+      <button data-go="settings"><span>⚙</span>Ajustes</button>
+    </nav>
+  </div>
+
+  <dialog id="txDialog" class="modal">
+    <form method="dialog" id="txForm">
+      <div class="modal-head"><div><span class="eyebrow" id="txEyebrow">NUEVO</span><h2 id="txTitle">Agregar gasto</h2></div><button class="close" value="cancel">×</button></div>
+      <input type="hidden" id="txId">
+      <input type="hidden" id="txType" value="expense">
+      <div class="form-grid">
+        <label>Fecha<input id="txDate" type="date" required></label>
+        <label>Concepto<input id="txDescription" maxlength="160" placeholder="Ej. Supermercado" required></label>
+        <label>Categoría<select id="txCategory"></select></label>
+        <label>Importe<input id="txAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required></label>
+        <label id="paymentMethodWrap">¿Cómo se pagó?<select id="txPaymentMethod"><option value="cash">Efectivo</option><option value="debit">Tarjeta de débito</option><option value="credit">Tarjeta de crédito</option><option value="transfer">Transferencia</option></select></label>
+        <label id="cardWrap" class="hidden">Tarjeta<select id="txCard"></select></label>
+        <label class="wide">Nota opcional<textarea id="txNotes" rows="2" placeholder="Algo que quieras recordar"></textarea></label>
+        <label class="wide receipt-label" id="receiptWrap"><span>📷 Foto del ticket <small>(opcional)</small></span><input id="txReceipt" type="file" accept="image/*" capture="environment"><img id="receiptPreview" class="receipt-preview hidden" alt="Vista previa del ticket"></label>
+      </div>
+      <button type="button" class="btn primary" id="saveTxBtn">Guardar</button>
+    </form>
+  </dialog>
+
+  <dialog id="cardDialog" class="modal">
+    <form method="dialog" id="cardForm">
+      <div class="modal-head"><div><span class="eyebrow">TARJETA</span><h2 id="cardTitle">Agregar tarjeta</h2></div><button class="close" value="cancel">×</button></div>
+      <input type="hidden" id="cardId">
+      <div class="form-grid">
+        <label>Nombre<input id="cardName" placeholder="Ej. BBVA Azul" required></label>
+        <label>Banco<input id="cardBank" placeholder="Ej. BBVA"></label>
+        <label>Últimos 4 dígitos<input id="cardLast4" inputmode="numeric" maxlength="4" placeholder="1234"></label>
+        <label>Límite de crédito<input id="cardLimit" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+        <label>Día de corte<input id="cardCutoff" type="number" min="1" max="28" value="15" required></label>
+        <label>Día límite de pago<input id="cardPayment" type="number" min="1" max="28" value="3" required></label>
+      </div>
+      <div class="tip">Configuración inicial recomendada: <b>corte 15</b> y <b>pago 3</b>.</div>
+      <button type="button" class="btn primary" id="saveCardBtn">Guardar tarjeta</button>
+    </form>
+  </dialog>
+
+  <dialog id="paymentDialog" class="modal compact-modal">
+    <form method="dialog">
+      <div class="modal-head"><div><span class="eyebrow">PAGO</span><h2 id="paymentTitle">Registrar pago</h2></div><button class="close" value="cancel">×</button></div>
+      <input type="hidden" id="statementId">
+      <label>Importe pagado<input id="paymentAmount" type="number" min="0.01" step="0.01" required></label>
+      <label>Fecha del pago<input id="paymentDate" type="date" required></label>
+      <button type="button" class="btn primary" id="savePaymentBtn">Marcar pago</button>
+    </form>
+  </dialog>
+
+  <dialog id="amountDialog" class="modal compact-modal">
+    <form method="dialog">
+      <div class="modal-head"><div><span class="eyebrow">ESTADO DE CUENTA</span><h2>Monto exacto del banco</h2></div><button class="close" value="cancel">×</button></div>
+      <input type="hidden" id="amountStatementId">
+      <p class="helper">Si el banco muestra un “pago para no generar intereses” diferente, escríbelo aquí y éste será el monto que usarán los recordatorios.</p>
+      <label>Pago para no generar intereses<input id="statementAmount" type="number" min="0.01" step="0.01"></label>
+      <button type="button" class="btn primary" id="saveStatementAmountBtn">Guardar monto</button>
+    </form>
+  </dialog>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
