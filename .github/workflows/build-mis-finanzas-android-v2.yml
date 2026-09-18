@@ -1,9 +1,9 @@
-name: Build Mis Finanzas Android V2.6
+name: Build Mis Finanzas Android V2.7
 
 on:
   push:
     branches:
-      - mis-finanzas-android-v26
+      - mis-finanzas-android-v27
   pull_request:
     branches:
       - main
@@ -149,17 +149,33 @@ jobs:
           grep -q 'annual_interest_rate' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
           node --check android-v2/app/src/main/assets/app.js
 
-      - name: Package expanded 2.6 source
+      - name: Apply 2.7 stability branding and 240-week plan patch
         shell: bash
         run: |
           set -euxo pipefail
-          zip -qr Mis-Finanzas-Local-2.6.0-source.zip android-v2
+          cat android-v2-2.7.patch.part00 > android-v2-2.7.patch.gz.b64
+          test "$(wc -c < android-v2-2.7.patch.gz.b64)" -eq 28000
+          echo "2cc0c4416a005ba2d16263a5c4b7e17e15c5bfc1ef90323f0e59af515aaec6d3  android-v2-2.7.patch.gz.b64" | sha256sum -c -
+          base64 -d android-v2-2.7.patch.gz.b64 | gzip -d > android-v2-2.7.patch
+          sed -i 's#mf26base/android-v2/#android-v2/#g; s#mf27/android-v2/#android-v2/#g' android-v2-2.7.patch
+          patch -p0 < android-v2-2.7.patch
+          grep -q "versionName '2.7.0'" android-v2/app/build.gradle
+          grep -q 'Mis finanzas 656' android-v2/app/src/main/AndroidManifest.xml
+          grep -q 'Math.min(240,horizonWeeks)' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
+          grep -q 'topThemeSwatches' android-v2/app/src/main/assets/index.html
+          node --check android-v2/app/src/main/assets/app.js
+
+      - name: Package expanded 2.7 source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          zip -qr Mis-Finanzas-656-2.7.0-source.zip android-v2
 
       - name: Upload expanded source
         uses: actions/upload-artifact@v4
         with:
-          name: Mis-Finanzas-Local-2.6.0-source
-          path: Mis-Finanzas-Local-2.6.0-source.zip
+          name: Mis-Finanzas-656-2.7.0-source
+          path: Mis-Finanzas-656-2.7.0-source.zip
           if-no-files-found: error
           retention-days: 7
 
@@ -174,18 +190,18 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.6.0-unsigned.apk
+          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-656-2.7.0-unsigned.apk
           APKSIGNER_JAR="$(find "$ANDROID_HOME/build-tools" -type f -path '*/lib/apksigner.jar' | sort -V | tail -1)"
           test -n "$APKSIGNER_JAR"
           cp "$APKSIGNER_JAR" apksigner.jar
-          sha256sum Mis-Finanzas-Local-2.6.0-unsigned.apk > SHA256-unsigned.txt
+          sha256sum Mis-Finanzas-656-2.7.0-unsigned.apk > SHA256-unsigned.txt
 
       - name: Upload unsigned APK
         uses: actions/upload-artifact@v4
         with:
-          name: Mis-Finanzas-Local-2.6.0-unsigned
+          name: Mis-Finanzas-656-2.7.0-unsigned
           path: |
-            Mis-Finanzas-Local-2.6.0-unsigned.apk
+            Mis-Finanzas-656-2.7.0-unsigned.apk
             SHA256-unsigned.txt
             apksigner.jar
           if-no-files-found: error
