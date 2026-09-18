@@ -39,7 +39,18 @@ jobs:
           test -f android-v2/settings.gradle
           test -f android-v2/app/build.gradle
 
-      - name: Build release APK
+      - name: Apply 2.1 interface and reminder patch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          base64 -d android-v2-2.1.patch.gz.b64 | gzip -d > android-v2-2.1.patch
+          sed -i 's#mis-finanzas-android-v2-backup-before-2.1/#android-v2/#g; s#mis-finanzas-android-v2/#android-v2/#g' android-v2-2.1.patch
+          patch -p0 < android-v2-2.1.patch
+          grep -q "versionName '2.1.0'" android-v2/app/build.gradle
+          grep -q 'data-theme="violet"' android-v2/app/src/main/assets/index.html
+          grep -q 'payment_reminders_v21' android-v2/app/src/main/java/com/misfinanzas/local/ReminderReceiver.java
+
+      - name: Build unsigned release APK
         working-directory: android-v2
         shell: bash
         run: |
@@ -47,40 +58,19 @@ jobs:
           gradle --version
           gradle :app:assembleRelease --no-daemon --stacktrace
 
-      - name: Generate signing key and sign APK
+      - name: Prepare artifact
         shell: bash
         run: |
           set -euxo pipefail
-          UNSIGNED="android-v2/app/build/outputs/apk/release/app-release-unsigned.apk"
-          cp "$UNSIGNED" Mis-Finanzas-Local-2.0.0-unsigned.apk
-          SIGN_PASS="MF2-$(openssl rand -hex 14)"
-          printf '%s' "$SIGN_PASS" > .sign-pass
-          keytool -genkeypair -v             -keystore Mis-Finanzas-Local-v2-signing.jks             -alias misfinanzasv2             -keyalg RSA -keysize 2048 -validity 10000             -storepass "$SIGN_PASS" -keypass "$SIGN_PASS"             -dname "CN=Mis Finanzas Local V2, OU=Personal, O=Mis Finanzas, L=Ciudad Juarez, ST=Chihuahua, C=MX"
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
-          test -n "$APKSIGNER"
-          "$APKSIGNER" sign             --ks Mis-Finanzas-Local-v2-signing.jks             --ks-key-alias misfinanzasv2             --ks-pass "pass:$SIGN_PASS"             --key-pass "pass:$SIGN_PASS"             --out Mis-Finanzas-Local-2.0.0.apk             Mis-Finanzas-Local-2.0.0-unsigned.apk
-          "$APKSIGNER" verify --verbose --print-certs Mis-Finanzas-Local-2.0.0.apk | tee APK-VERIFY.txt
-          {
-            echo "Mis Finanzas Local v2 - clave de firma"
-            echo
-            echo "Alias: misfinanzasv2"
-            echo "Password del keystore: $SIGN_PASS"
-            echo "Password de la clave: $SIGN_PASS"
-            echo
-            echo "IMPORTANTE: conserva este archivo y Mis-Finanzas-Local-v2-signing.jks."
-            echo "Las próximas versiones con el mismo applicationId deben firmarse con esta misma clave."
-          } > SIGNING-INFO.txt
-          sha256sum Mis-Finanzas-Local-2.0.0.apk > SHA256.txt
+          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.1.0-unsigned.apk
+          sha256sum Mis-Finanzas-Local-2.1.0-unsigned.apk > SHA256-unsigned.txt
 
-      - name: Upload signed APK and update key
+      - name: Upload unsigned APK
         uses: actions/upload-artifact@v4
         with:
-          name: Mis-Finanzas-Local-2.0.0-release
+          name: Mis-Finanzas-Local-2.1.0-unsigned
           path: |
-            Mis-Finanzas-Local-2.0.0.apk
-            SHA256.txt
-            APK-VERIFY.txt
-            Mis-Finanzas-Local-v2-signing.jks
-            SIGNING-INFO.txt
+            Mis-Finanzas-Local-2.1.0-unsigned.apk
+            SHA256-unsigned.txt
           if-no-files-found: error
           retention-days: 7
