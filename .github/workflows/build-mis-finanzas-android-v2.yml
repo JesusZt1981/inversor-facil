@@ -1,9 +1,9 @@
-name: Build Mis Finanzas Android V2.3
+name: Build Mis Finanzas Android V2.4
 
 on:
   push:
     branches:
-      - mis-finanzas-android-v23
+      - mis-finanzas-android-v24
   pull_request:
     branches:
       - main
@@ -36,8 +36,6 @@ jobs:
           base64 -d android-v2-project.b64 > android-v2-project.zip
           mkdir -p android-v2
           unzip -q android-v2-project.zip -d android-v2
-          test -f android-v2/settings.gradle
-          test -f android-v2/app/build.gradle
 
       - name: Apply 2.1 patch
         shell: bash
@@ -84,7 +82,7 @@ jobs:
               w.writeframes(b''.join(struct.pack('<h', int(x*32767)) for x in samples))
           PY
 
-      - name: Apply 2.3 menu guide and finance summary patch
+      - name: Apply 2.3 patch
         shell: bash
         run: |
           set -euxo pipefail
@@ -94,10 +92,21 @@ jobs:
           base64 -d android-v2-2.3.patch.gz.b64 | gzip -d > android-v2-2.3.patch
           sed -i 's#mis-finanzas-android-v22/#android-v2/#g; s#mis-finanzas-android-v23/#android-v2/#g' android-v2-2.3.patch
           patch -p0 < android-v2-2.3.patch
-          grep -q "versionName '2.3.0'" android-v2/app/build.gradle
-          grep -q 'DailySummaryActivity' android-v2/app/src/main/AndroidManifest.xml
-          grep -q 'dailySummaryData' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
-          grep -q 'incomeCategories' android-v2/app/src/main/assets/app.js
+
+      - name: Apply 2.4 configurable cutoff and payment plan patch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat android-v2-2.4.patch.part00 android-v2-2.4.patch.part01 android-v2-2.4.patch.part02 android-v2-2.4.patch.part03 > android-v2-2.4.patch.gz.b64
+          test "$(wc -c < android-v2-2.4.patch.gz.b64)" -eq 34416
+          echo "fd142d7d6c028462bd6a9bdb4e1cfa4999e1b5160c9fc358cb9fe3cdb5389206  android-v2-2.4.patch.gz.b64" | sha256sum -c -
+          base64 -d android-v2-2.4.patch.gz.b64 | gzip -d > android-v2-2.4.patch
+          sed -i 's#mis-finanzas-android-v24-base/#android-v2/#g; s#mis-finanzas-android-v24/#android-v2/#g' android-v2-2.4.patch
+          patch -p0 < android-v2-2.4.patch
+          grep -q "versionName '2.4.0'" android-v2/app/build.gradle
+          grep -q 'weekly_cutoff_day' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
+          grep -q 'PaymentPlanPdf' android-v2/app/src/main/java/com/misfinanzas/local/MainActivity.java
+          test -f android-v2/app/src/main/java/com/misfinanzas/local/PaymentPlanPdf.java
           node --check android-v2/app/src/main/assets/app.js
 
       - name: Build unsigned release APK
@@ -111,18 +120,18 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.3.0-unsigned.apk
+          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.4.0-unsigned.apk
           APKSIGNER_JAR="$(find "$ANDROID_HOME/build-tools" -type f -path '*/lib/apksigner.jar' | sort -V | tail -1)"
           test -n "$APKSIGNER_JAR"
           cp "$APKSIGNER_JAR" apksigner.jar
-          sha256sum Mis-Finanzas-Local-2.3.0-unsigned.apk > SHA256-unsigned.txt
+          sha256sum Mis-Finanzas-Local-2.4.0-unsigned.apk > SHA256-unsigned.txt
 
       - name: Upload unsigned APK
         uses: actions/upload-artifact@v4
         with:
-          name: Mis-Finanzas-Local-2.3.0-unsigned
+          name: Mis-Finanzas-Local-2.4.0-unsigned
           path: |
-            Mis-Finanzas-Local-2.3.0-unsigned.apk
+            Mis-Finanzas-Local-2.4.0-unsigned.apk
             SHA256-unsigned.txt
             apksigner.jar
           if-no-files-found: error
