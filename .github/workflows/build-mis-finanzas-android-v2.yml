@@ -1,0 +1,62 @@
+name: Build Mis Finanzas Android V2
+
+on:
+  push:
+    branches:
+      - mis-finanzas-android-v2
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Reconstruct Android project
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat android-v2-project.b64.part00 android-v2-project.b64.part01 android-v2-project.b64.part02 android-v2-project.b64.part03 > android-v2-project.b64
+          base64 -d android-v2-project.b64 > android-v2-project.zip
+          mkdir -p android-v2
+          unzip -q android-v2-project.zip -d android-v2
+          test -f android-v2/settings.gradle
+          test -f android-v2/app/build.gradle
+
+      - name: Build release APK
+        working-directory: android-v2
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gradle --version
+          gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.0.0-unsigned.apk
+          sha256sum Mis-Finanzas-Local-2.0.0-unsigned.apk > SHA256.txt
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mis-Finanzas-Local-2.0.0-unsigned
+          path: |
+            Mis-Finanzas-Local-2.0.0-unsigned.apk
+            SHA256.txt
+          if-no-files-found: error
+          retention-days: 7
