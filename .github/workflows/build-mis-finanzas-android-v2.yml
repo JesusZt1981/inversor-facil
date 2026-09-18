@@ -59,11 +59,14 @@ jobs:
           gradle --version
           gradle :app:assembleRelease --no-daemon --stacktrace
 
-      - name: Prepare artifact
+      - name: Prepare artifact and signing tool
         shell: bash
         run: |
           set -euxo pipefail
           cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.1.0-unsigned.apk
+          APKSIGNER_JAR="$(find "$ANDROID_HOME/build-tools" -type f -path '*/lib/apksigner.jar' | sort -V | tail -1)"
+          test -n "$APKSIGNER_JAR"
+          cp "$APKSIGNER_JAR" apksigner.jar
           sha256sum Mis-Finanzas-Local-2.1.0-unsigned.apk > SHA256-unsigned.txt
 
       - name: Upload unsigned APK
@@ -73,5 +76,6 @@ jobs:
           path: |
             Mis-Finanzas-Local-2.1.0-unsigned.apk
             SHA256-unsigned.txt
+            apksigner.jar
           if-no-files-found: error
           retention-days: 7
