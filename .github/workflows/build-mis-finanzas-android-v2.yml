@@ -153,7 +153,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          cat android-v2-2.7.patch.part00 > android-v2-2.7.patch.gz.b64
+          cat android-v2-2.7.patch.part00 android-v2-2.7.patch.part01 android-v2-2.7.patch.part02 android-v2-2.7.patch.part03 > android-v2-2.7.patch.gz.b64
           test "$(wc -c < android-v2-2.7.patch.gz.b64)" -eq 28000
           echo "2cc0c4416a005ba2d16263a5c4b7e17e15c5bfc1ef90323f0e59af515aaec6d3  android-v2-2.7.patch.gz.b64" | sha256sum -c -
           base64 -d android-v2-2.7.patch.gz.b64 | gzip -d > android-v2-2.7.patch
