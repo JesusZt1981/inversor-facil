@@ -1,0 +1,133 @@
+name: Build Mis Finanzas Android V2
+
+on:
+  push:
+    branches:
+      - mis-finanzas-android-v2
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Reconstruct Android project
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat android-v2-project.b64.part00 android-v2-project.b64.part01 android-v2-project.b64.part02 android-v2-project.b64.part03 > android-v2-project.b64
+          base64 -d android-v2-project.b64 > android-v2-project.zip
+          mkdir -p android-v2
+          unzip -q android-v2-project.zip -d android-v2
+          test -f android-v2/settings.gradle
+          test -f android-v2/app/build.gradle
+
+      - name: Apply 2.1 interface and reminder patch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat android-v2-2.1.patch.part0 android-v2-2.1.patch.part1 android-v2-2.1.patch.part2 android-v2-2.1.patch.part3 > android-v2-2.1.patch.gz.b64
+          base64 -d android-v2-2.1.patch.gz.b64 | gzip -d > android-v2-2.1.patch
+          sed -i 's#mis-finanzas-android-v2-backup-before-2.1/#android-v2/#g; s#mis-finanzas-android-v2/#android-v2/#g' android-v2-2.1.patch
+          patch -p0 < android-v2-2.1.patch
+          grep -q "versionName '2.1.0'" android-v2/app/build.gradle
+
+      - name: Apply 2.2 full-screen alarm and clarity patch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat android-v2-2.2.patch.part00 android-v2-2.2.patch.part01 android-v2-2.2.patch.part02 android-v2-2.2.patch.part03 android-v2-2.2.patch.part04 android-v2-2.2.patch.part05 > android-v2-2.2.patch.gz.b64
+          base64 -d android-v2-2.2.patch.gz.b64 | gzip -d > android-v2-2.2.patch
+          sed -i 's#/mnt/data/mis-finanzas-android-v22/#android-v2/#g; s#/mnt/data/mis-finanzas-android-v2/#android-v2/#g' android-v2-2.2.patch
+          patch -p0 < android-v2-2.2.patch
+          grep -q "versionName '2.2.0'" android-v2/app/build.gradle
+          grep -q 'USE_FULL_SCREEN_INTENT' android-v2/app/src/main/AndroidManifest.xml
+          test -f android-v2/app/src/main/java/com/misfinanzas/local/ReminderAlarmActivity.java
+
+      - name: Generate payment chirp sound
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p android-v2/app/src/main/res/raw
+          python3 - <<'PY'
+          import wave, math, struct
+          sr=44100
+          duration=1.4
+          samples=[]
+          for i in range(int(sr*duration)):
+              t=i/sr
+              val=0.0
+              for start in [0.05,0.35,0.72,1.02]:
+                  local=t-start
+                  if 0 <= local <= 0.18:
+                      f=1250+1700*(local/0.18)
+                      env=math.sin(math.pi*local/0.18)**2
+                      val += 0.28*env*math.sin(2*math.pi*f*local)
+                      val += 0.10*env*math.sin(2*math.pi*(f*1.65)*local)
+              samples.append(max(-1,min(1,val)))
+          path='android-v2/app/src/main/res/raw/payment_chirp.wav'
+          with wave.open(path,'w') as w:
+              w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+              w.writeframes(b''.join(struct.pack('<h', int(x*32767)) for x in samples))
+          PY
+          test -s android-v2/app/src/main/res/raw/payment_chirp.wav
+
+      - name: Package expanded source for maintenance
+        shell: bash
+        run: |
+          set -euxo pipefail
+          zip -qr Mis-Finanzas-Local-2.2.0-source.zip android-v2
+
+      - name: Upload expanded source
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mis-Finanzas-Local-2.2.0-source
+          path: Mis-Finanzas-Local-2.2.0-source.zip
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Build unsigned release APK
+        working-directory: android-v2
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gradle --version
+          gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Prepare artifact and signing tool
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.2.0-unsigned.apk
+          APKSIGNER_JAR="$(find "$ANDROID_HOME/build-tools" -type f -path '*/lib/apksigner.jar' | sort -V | tail -1)"
+          test -n "$APKSIGNER_JAR"
+          cp "$APKSIGNER_JAR" apksigner.jar
+          sha256sum Mis-Finanzas-Local-2.2.0-unsigned.apk > SHA256-unsigned.txt
+
+      - name: Upload unsigned APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mis-Finanzas-Local-2.2.0-unsigned
+          path: |
+            Mis-Finanzas-Local-2.2.0-unsigned.apk
+            SHA256-unsigned.txt
+            apksigner.jar
+          if-no-files-found: error
+          retention-days: 7
