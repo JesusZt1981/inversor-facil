@@ -89,6 +89,20 @@ jobs:
           PY
           test -s android-v2/app/src/main/res/raw/payment_chirp.wav
 
+      - name: Package expanded source for maintenance
+        shell: bash
+        run: |
+          set -euxo pipefail
+          zip -qr Mis-Finanzas-Local-2.2.0-source.zip android-v2
+
+      - name: Upload expanded source
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mis-Finanzas-Local-2.2.0-source
+          path: Mis-Finanzas-Local-2.2.0-source.zip
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Build unsigned release APK
         working-directory: android-v2
         shell: bash
