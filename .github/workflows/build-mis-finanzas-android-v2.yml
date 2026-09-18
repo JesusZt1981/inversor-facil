@@ -47,19 +47,40 @@ jobs:
           gradle --version
           gradle :app:assembleRelease --no-daemon --stacktrace
 
-      - name: Prepare artifact
+      - name: Generate signing key and sign APK
         shell: bash
         run: |
           set -euxo pipefail
-          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.0.0-unsigned.apk
-          sha256sum Mis-Finanzas-Local-2.0.0-unsigned.apk > SHA256.txt
+          UNSIGNED="android-v2/app/build/outputs/apk/release/app-release-unsigned.apk"
+          cp "$UNSIGNED" Mis-Finanzas-Local-2.0.0-unsigned.apk
+          SIGN_PASS="MF2-$(openssl rand -hex 14)"
+          printf '%s' "$SIGN_PASS" > .sign-pass
+          keytool -genkeypair -v             -keystore Mis-Finanzas-Local-v2-signing.jks             -alias misfinanzasv2             -keyalg RSA -keysize 2048 -validity 10000             -storepass "$SIGN_PASS" -keypass "$SIGN_PASS"             -dname "CN=Mis Finanzas Local V2, OU=Personal, O=Mis Finanzas, L=Ciudad Juarez, ST=Chihuahua, C=MX"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" sign             --ks Mis-Finanzas-Local-v2-signing.jks             --ks-key-alias misfinanzasv2             --ks-pass "pass:$SIGN_PASS"             --key-pass "pass:$SIGN_PASS"             --out Mis-Finanzas-Local-2.0.0.apk             Mis-Finanzas-Local-2.0.0-unsigned.apk
+          "$APKSIGNER" verify --verbose --print-certs Mis-Finanzas-Local-2.0.0.apk | tee APK-VERIFY.txt
+          {
+            echo "Mis Finanzas Local v2 - clave de firma"
+            echo
+            echo "Alias: misfinanzasv2"
+            echo "Password del keystore: $SIGN_PASS"
+            echo "Password de la clave: $SIGN_PASS"
+            echo
+            echo "IMPORTANTE: conserva este archivo y Mis-Finanzas-Local-v2-signing.jks."
+            echo "Las próximas versiones con el mismo applicationId deben firmarse con esta misma clave."
+          } > SIGNING-INFO.txt
+          sha256sum Mis-Finanzas-Local-2.0.0.apk > SHA256.txt
 
-      - name: Upload APK
+      - name: Upload signed APK and update key
         uses: actions/upload-artifact@v4
         with:
-          name: Mis-Finanzas-Local-2.0.0-unsigned
+          name: Mis-Finanzas-Local-2.0.0-release
           path: |
-            Mis-Finanzas-Local-2.0.0-unsigned.apk
+            Mis-Finanzas-Local-2.0.0.apk
             SHA256.txt
+            APK-VERIFY.txt
+            Mis-Finanzas-Local-v2-signing.jks
+            SIGNING-INFO.txt
           if-no-files-found: error
           retention-days: 7
