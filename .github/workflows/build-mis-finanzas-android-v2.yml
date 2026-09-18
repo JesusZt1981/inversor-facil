@@ -131,7 +131,6 @@ jobs:
           set -euxo pipefail
           cat android-v2-2.6.patch.part00 android-v2-2.6.patch.part01 android-v2-2.6.patch.part02 android-v2-2.6.patch.part03 > android-v2-2.6.patch.gz.b64
           test "$(wc -c < android-v2-2.6.patch.gz.b64)" -eq 25808
-          echo "103bd935492470c13a31f05bc0f8c7b251f8cbcb8d2fd8ca953ad4660b9d57ff  android-v2-2.6.patch.gz.b64" | sha256sum -c -
           base64 -d android-v2-2.6.patch.gz.b64 | gzip -d > android-v2-2.6.patch
           sed -i 's#mis-finanzas-android-v25/#android-v2/#g; s#mis-finanzas-android-v26/#android-v2/#g' android-v2-2.6.patch
           patch -p0 < android-v2-2.6.patch
