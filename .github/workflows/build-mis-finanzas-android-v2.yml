@@ -1,9 +1,9 @@
-name: Build Mis Finanzas Android V2.5
+name: Build Mis Finanzas Android V2.6
 
 on:
   push:
     branches:
-      - mis-finanzas-android-v25
+      - mis-finanzas-android-v26
   pull_request:
     branches:
       - main
@@ -125,17 +125,34 @@ jobs:
           grep -q 'planIncomeAmount' android-v2/app/src/main/assets/index.html
           node --check android-v2/app/src/main/assets/app.js
 
-      - name: Package expanded 2.5 source
+      - name: Apply 2.6 complete credit card data patch
         shell: bash
         run: |
           set -euxo pipefail
-          zip -qr Mis-Finanzas-Local-2.5.0-source.zip android-v2
+          cat android-v2-2.6.patch.part00 android-v2-2.6.patch.part01 android-v2-2.6.patch.part02 android-v2-2.6.patch.part03 > android-v2-2.6.patch.gz.b64
+          test "$(wc -c < android-v2-2.6.patch.gz.b64)" -eq 25808
+          echo "103bd935492470c13a31f05bc0f8c7b251f8cbcb8d2fd8ca953ad4660b9d57ff  android-v2-2.6.patch.gz.b64" | sha256sum -c -
+          base64 -d android-v2-2.6.patch.gz.b64 | gzip -d > android-v2-2.6.patch
+          sed -i 's#mis-finanzas-android-v25/#android-v2/#g; s#mis-finanzas-android-v26/#android-v2/#g' android-v2-2.6.patch
+          patch -p0 < android-v2-2.6.patch
+          grep -q "versionName '2.6.0'" android-v2/app/build.gradle
+          grep -q 'current_balance' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
+          grep -q 'no_interest_payment' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
+          grep -q 'cardCurrentBalance' android-v2/app/src/main/assets/index.html
+          grep -q 'annual_interest_rate' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
+          node --check android-v2/app/src/main/assets/app.js
+
+      - name: Package expanded 2.6 source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          zip -qr Mis-Finanzas-Local-2.6.0-source.zip android-v2
 
       - name: Upload expanded source
         uses: actions/upload-artifact@v4
         with:
-          name: Mis-Finanzas-Local-2.5.0-source
-          path: Mis-Finanzas-Local-2.5.0-source.zip
+          name: Mis-Finanzas-Local-2.6.0-source
+          path: Mis-Finanzas-Local-2.6.0-source.zip
           if-no-files-found: error
           retention-days: 7
 
@@ -150,18 +167,18 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.5.0-unsigned.apk
+          cp android-v2/app/build/outputs/apk/release/app-release-unsigned.apk Mis-Finanzas-Local-2.6.0-unsigned.apk
           APKSIGNER_JAR="$(find "$ANDROID_HOME/build-tools" -type f -path '*/lib/apksigner.jar' | sort -V | tail -1)"
           test -n "$APKSIGNER_JAR"
           cp "$APKSIGNER_JAR" apksigner.jar
-          sha256sum Mis-Finanzas-Local-2.5.0-unsigned.apk > SHA256-unsigned.txt
+          sha256sum Mis-Finanzas-Local-2.6.0-unsigned.apk > SHA256-unsigned.txt
 
       - name: Upload unsigned APK
         uses: actions/upload-artifact@v4
         with:
-          name: Mis-Finanzas-Local-2.5.0-unsigned
+          name: Mis-Finanzas-Local-2.6.0-unsigned
           path: |
-            Mis-Finanzas-Local-2.5.0-unsigned.apk
+            Mis-Finanzas-Local-2.6.0-unsigned.apk
             SHA256-unsigned.txt
             apksigner.jar
           if-no-files-found: error
