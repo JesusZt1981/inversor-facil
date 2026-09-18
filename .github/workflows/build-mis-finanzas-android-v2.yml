@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # 2.7 split-patch validation
+  # 2.7 verified split-patch validation
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
