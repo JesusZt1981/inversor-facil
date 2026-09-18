@@ -134,6 +134,14 @@ jobs:
           base64 -d android-v2-2.6.patch.gz.b64 | gzip -d > android-v2-2.6.patch
           sed -i 's#mis-finanzas-android-v25/#android-v2/#g; s#mis-finanzas-android-v26/#android-v2/#g' android-v2-2.6.patch
           patch -p0 < android-v2-2.6.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java")
+          s=p.read_text()
+          s=s.replace('replaceAll("\\D","")','replaceAll("\\\\D","")')
+          s=s.replace('matches("\\d{4}-\\d{2}-\\d{2}")','matches("\\\\d{4}-\\\\d{2}-\\\\d{2}")')
+          p.write_text(s)
+          PY
           grep -q "versionName '2.6.0'" android-v2/app/build.gradle
           grep -q 'current_balance' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
           grep -q 'no_interest_payment' android-v2/app/src/main/java/com/misfinanzas/local/DbHelper.java
